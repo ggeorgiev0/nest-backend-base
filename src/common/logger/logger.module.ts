@@ -1,4 +1,5 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { LoggerModule as PinoLoggerModule } from 'nestjs-pino';
 
 import { ConfigModule } from '../../config/config.module';
@@ -12,11 +13,13 @@ import { CustomLoggerService } from './logger.service';
  */
 @Module({
   imports: [
+    ConfigModule,
     PinoLoggerModule.forRootAsync({
-      imports: [ConfigModule],
-      inject: [LoggerConfigService],
-      useFactory: (loggerConfigService: LoggerConfigService) =>
-        loggerConfigService.createLoggerOptions(),
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const loggerConfigService = new LoggerConfigService(configService);
+        return loggerConfigService.createLoggerOptions();
+      },
     }),
   ],
   providers: [LoggerConfigService, CustomLoggerService],

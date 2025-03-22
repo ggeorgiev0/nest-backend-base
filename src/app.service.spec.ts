@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/unbound-method */
 import { Test, TestingModule } from '@nestjs/testing';
 import { PinoLogger } from 'nestjs-pino';
 
@@ -8,27 +7,19 @@ import {
   resetLoggerMocks,
 } from '../test/utils/logger-mocks';
 
-import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { CustomLoggerService } from './common/logger/logger.service';
 
-describe('AppController', () => {
-  let appController: AppController;
-  let appService: AppService;
+describe('AppService', () => {
+  let service: AppService;
 
   beforeEach(async () => {
     // Reset all mock functions
     resetLoggerMocks();
 
-    const app: TestingModule = await Test.createTestingModule({
-      controllers: [AppController],
+    const module: TestingModule = await Test.createTestingModule({
       providers: [
-        {
-          provide: AppService,
-          useValue: {
-            getHello: jest.fn().mockReturnValue('Hello World!'),
-          },
-        },
+        AppService,
         {
           provide: PinoLogger,
           useValue: mockPinoLogger,
@@ -40,16 +31,19 @@ describe('AppController', () => {
       ],
     }).compile();
 
-    appController = app.get<AppController>(AppController);
-    appService = app.get<AppService>(AppService);
+    service = module.get<AppService>(AppService);
   });
 
-  describe('root', () => {
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('getHello', () => {
     it('should return "Hello World!"', () => {
-      const result = appController.getHello();
+      const result = service.getHello();
       expect(result).toBe('Hello World!');
-      expect(mockPinoLogger.info).toHaveBeenCalled();
-      expect(appService.getHello).toHaveBeenCalled();
+      expect(mockCustomLoggerService.log).toHaveBeenCalled();
+      expect(mockCustomLoggerService.debug).toHaveBeenCalled();
     });
   });
 });
