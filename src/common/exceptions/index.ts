@@ -15,4 +15,4 @@ export * from './http-response.interface';
 export * from './validation.pipe';
 
 // Export services
-export * from './services';
+export * from './services/index';

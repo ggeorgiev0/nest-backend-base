@@ -88,7 +88,7 @@ export default tseslint.config(
         {
           commonjs: true,
           caseSensitive: true,
-          ignore: ['^@nestjs/.*$'],
+          ignore: ['^@nestjs/.*$', '\\./services$', '\\./services/index$'],
         },
       ],
       'import/no-duplicates': 'error',
