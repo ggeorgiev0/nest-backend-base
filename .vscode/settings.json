@@ -10,5 +10,13 @@
   "eslint.validate": ["typescript"],
   "typescript.preferences.importModuleSpecifier": "non-relative",
   "javascript.preferences.importModuleSpecifier": "non-relative",
-  "files.eol": "\n"
+  "files.eol": "\n",
+
+  // Debugging settings
+  "debug.toolBarLocation": "docked",
+  "debug.inlineValues": true,
+  "debug.console.closeOnEnd": false,
+  "debug.javascript.autoAttachFilter": "smart",
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "js/ts.implicitProjectConfig.experimentalDecorators": true
 }

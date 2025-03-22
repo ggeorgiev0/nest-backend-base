@@ -19,6 +19,7 @@
     "strictBindCallApply": true,
     "noFallthroughCasesInSwitch": true,
     "esModuleInterop": true,
+    "allowJs": true,
     "paths": {
       "@/*": ["src/*"],
       "@api/*": ["src/api/*"],
@@ -27,5 +28,7 @@
       "@lib/*": ["src/lib/*"],
       "@utils/*": ["src/utils/*"]
     }
-  }
+  },
+  "include": ["src/**/*", "test/**/*", "test/jest.setup.js"],
+  "exclude": ["node_modules", "dist"]
 }
