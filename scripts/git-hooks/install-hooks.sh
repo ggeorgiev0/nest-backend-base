@@ -1,28 +1,37 @@
-#!/bin/sh
+#!/bin/bash
 
-# This script installs the prepare-commit-msg hook to both standard Git hooks location
-# and Husky hooks location to ensure it works in all configurations
+# Ensure the script exits on any error
+set -e
 
+# Define the source files
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PREPARE_COMMIT_MSG_SOURCE="${SCRIPT_DIR}/prepare-commit-msg"
+COMMIT_MSG_SOURCE="${SCRIPT_DIR}/commit-msg"
+
+# Define the destination directories
+GIT_HOOKS_DIR=".git/hooks"
+HUSKY_HOOKS_DIR=".husky/_"
+
+# Create destination directories if they don't exist
+mkdir -p "${GIT_HOOKS_DIR}"
+mkdir -p "${HUSKY_HOOKS_DIR}"
+
+# Copy prepare-commit-msg hooks
 echo "Installing prepare-commit-msg hook..."
+cp "${PREPARE_COMMIT_MSG_SOURCE}" "${GIT_HOOKS_DIR}/prepare-commit-msg"
+cp "${PREPARE_COMMIT_MSG_SOURCE}" "${HUSKY_HOOKS_DIR}/prepare-commit-msg"
 
-# Copy to standard Git hooks location
-cp scripts/git-hooks/prepare-commit-msg .git/hooks/prepare-commit-msg
-chmod +x .git/hooks/prepare-commit-msg
+# Make hooks executable
+chmod +x "${GIT_HOOKS_DIR}/prepare-commit-msg"
+chmod +x "${HUSKY_HOOKS_DIR}/prepare-commit-msg"
 
-# Copy to Husky hooks location (keeping the Husky initialization)
-if [ -f .husky/_/prepare-commit-msg ]; then
-  # Extract the Husky initialization lines
-  HUSKY_INIT=$(head -n 2 .husky/_/prepare-commit-msg)
-  
-  # Get our hook content (excluding the shebang)
-  HOOK_CONTENT=$(tail -n +2 scripts/git-hooks/prepare-commit-msg)
-  
-  # Combine them
-  echo "$HUSKY_INIT" > .husky/_/prepare-commit-msg
-  echo "" >> .husky/_/prepare-commit-msg
-  echo "$HOOK_CONTENT" >> .husky/_/prepare-commit-msg
-  
-  chmod +x .husky/_/prepare-commit-msg
-fi
+# Copy commit-msg hooks
+echo "Installing commit-msg hook..."
+cp "${COMMIT_MSG_SOURCE}" "${GIT_HOOKS_DIR}/commit-msg"
+cp "${COMMIT_MSG_SOURCE}" "${HUSKY_HOOKS_DIR}/commit-msg"
 
-echo "Git hooks installed successfully!" 
+# Make commit-msg hooks executable
+chmod +x "${GIT_HOOKS_DIR}/commit-msg"
+chmod +x "${HUSKY_HOOKS_DIR}/commit-msg"
+
+echo "Git hooks installed successfully." 
