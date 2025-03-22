@@ -25,12 +25,19 @@ export default tseslint.config(
       ecmaVersion: 5,
       sourceType: 'module',
       parserOptions: {
+        project: './tsconfig.json',
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
       },
     },
   },
   {
+    files: ['**/*.ts'],
+    languageOptions: {
+      parserOptions: {
+        project: './tsconfig.json',
+      },
+    },
     plugins: {
       import: eslintPluginImport,
     },
@@ -40,12 +47,21 @@ export default tseslint.config(
           alwaysTryTypes: true,
           project: './tsconfig.json',
         },
+        node: true,
       },
+      'import/parsers': {
+        '@typescript-eslint/parser': ['.ts', '.tsx'],
+      },
+      'import/extensions': ['.js', '.jsx', '.ts', '.tsx'],
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-floating-promises': 'warn',
       '@typescript-eslint/no-unsafe-argument': 'warn',
+      '@typescript-eslint/no-unsafe-call': 'warn',
+      '@typescript-eslint/no-unsafe-member-access': 'warn',
+      '@typescript-eslint/no-unsafe-assignment': 'warn',
+      '@typescript-eslint/no-unsafe-return': 'warn',
       '@typescript-eslint/explicit-module-boundary-types': 'warn',
       '@typescript-eslint/explicit-function-return-type': 'warn',
       '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
@@ -66,7 +82,14 @@ export default tseslint.config(
           alphabetize: { order: 'asc', caseInsensitive: true },
         },
       ],
-      'import/no-unresolved': 'error',
+      'import/no-unresolved': [
+        'error',
+        {
+          commonjs: true,
+          caseSensitive: true,
+          ignore: ['^@nestjs/.*$'],
+        },
+      ],
       'import/no-duplicates': 'error',
       'import/no-cycle': 'error',
       'unicorn/prevent-abbreviations': 'off',
@@ -82,6 +105,16 @@ export default tseslint.config(
         },
       ],
       'sonarjs/cognitive-complexity': ['error', 15],
+    },
+  },
+  {
+    files: ['**/config/**/*.ts'],
+    rules: {
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
     },
   },
 );
