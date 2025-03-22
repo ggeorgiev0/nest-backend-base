@@ -11,6 +11,7 @@ The logging system in this application provides structured, configurable logging
 - **Context-Aware Logging**: Logs include the context (controller, service, etc.) they originated from.
 - **Multiple Log Levels**: Supports debug, info, warn, error, and fatal log levels.
 - **Pretty Printing in Development**: Human-readable logs in development with color coding.
+- **Log Rotation in Production**: Automatic log rotation based on file size and time to manage disk space.
 
 ## Usage
 
@@ -75,8 +76,21 @@ Logging is configured through environment variables:
 - `LOG_LEVEL`: Sets the minimum log level (trace, debug, info, warn, error, fatal)
 - `LOG_FORMAT`: Sets the format (dev, json)
 - `NODE_ENV`: Affects logging behavior (development, production)
+- `LOG_DIR`: Directory where log files are stored (default: 'logs')
+- `LOG_FILE_PREFIX`: Prefix for log file names (default: 'app')
 
-In development mode with `LOG_FORMAT=dev`, logs are pretty-printed. In production, logs are output as JSON.
+In development mode with `LOG_FORMAT=dev`, logs are pretty-printed. In production, logs are output as JSON and written to rotating log files.
+
+## Log Rotation
+
+In production mode, logs are automatically rotated to prevent them from growing too large:
+
+- Logs are stored in the directory specified by `LOG_DIR` with names following the pattern `{LOG_FILE_PREFIX}-YYYY-MM-DD-HH-MM.log`
+- Files are rotated when they reach 10MB in size
+- Old log files are compressed using gzip
+- A maximum of 7 days of logs are kept, with older logs automatically deleted
+
+This configuration helps manage disk space while ensuring that recent logs are always available for troubleshooting.
 
 ## Best Practices
 
@@ -109,3 +123,4 @@ In development mode with `LOG_FORMAT=dev`, logs are pretty-printed. In productio
 - **CorrelationIdMiddleware**: Adds correlation IDs to requests
 - **LoggerConfigService**: Configures Pino logger based on environment
 - **CustomLoggerService**: Extends logger functionality with correlation ID tracking
+- **Log Rotation**: Implemented using pino-roll for production environments

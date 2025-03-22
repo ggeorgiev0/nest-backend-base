@@ -66,7 +66,38 @@ export class LoggerConfigService {
       };
     }
 
-    // Production-specific configuration with JSON formatting
+    // Production-specific configuration with JSON formatting and log rotation
+    if (nodeEnv === Environment.Production) {
+      const logDir = this.configService.get<string>('LOG_DIR', 'logs');
+      const logFilePrefix = this.configService.get<string>('LOG_FILE_PREFIX', 'app');
+
+      return {
+        pinoHttp: {
+          ...loggerOptions,
+          transport: {
+            target: 'pino-roll',
+            options: {
+              // Log file path and naming pattern
+              file: `${logDir}/${logFilePrefix}-%Y-%m-%d-%H-%M.log`,
+
+              // Size-based rotation (when file reaches 10 MB)
+              size: '10m',
+
+              // Keep 7 days of logs
+              maxFiles: 7,
+
+              // Use gzip compression for rotated logs
+              compress: 'gzip',
+
+              // Create the log directory if it doesn't exist
+              mkdir: true,
+            },
+          },
+        },
+      };
+    }
+
+    // Default configuration with JSON formatting (no rotation)
     return {
       pinoHttp: {
         ...loggerOptions,
