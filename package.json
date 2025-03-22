@@ -83,7 +83,10 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": [
+      "../test/setup.ts"
+    ]
   },
   "lint-staged": {
     "*.{js,ts}": [

@@ -1,7 +1,8 @@
-import { Controller, Get, HttpException, HttpStatus, Param } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus, Param, Post, Body } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 
 import { AppService } from './app.service';
+import { sanitizeObject, pickSafeFields } from './common/logger';
 
 /**
  * Example application controller demonstrating logging patterns
@@ -76,5 +77,31 @@ export class AppController {
     );
 
     return `User ${id} details retrieved`;
+  }
+
+  /**
+   * Route demonstrating safe logging with redaction utilities
+   */
+  @Post('login')
+  login(@Body() credentials: { username: string; password: string; token?: string }): string {
+    // Example 1: Using the sanitizeObject utility
+    // This automatically redacts sensitive fields like password and token
+    this.logger.info({ credentials: sanitizeObject(credentials) }, 'Login attempt received');
+    // Will log: { credentials: { username: "user123", password: "[REDACTED]", token: "[REDACTED]" } }
+
+    // Example 2: Using the pickSafeFields utility
+    // This explicitly selects only safe fields to log
+    this.logger.info(
+      { user: pickSafeFields(credentials, ['username']) },
+      'Processing login for user',
+    );
+    // Will log: { user: { username: "user123" } }
+
+    // Simulate login logic
+    if (credentials.username === 'admin' && credentials.password === 'admin') {
+      return 'Login successful';
+    }
+
+    throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
   }
 }

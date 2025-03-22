@@ -2,6 +2,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PinoLogger } from 'nestjs-pino';
 
+import { MockConfigModule } from '../test/utils/config-mocks';
 import {
   mockPinoLogger,
   mockCustomLoggerService,
@@ -21,6 +22,7 @@ describe('AppController', () => {
     resetLoggerMocks();
 
     const app: TestingModule = await Test.createTestingModule({
+      imports: [MockConfigModule],
       controllers: [AppController],
       providers: [
         {

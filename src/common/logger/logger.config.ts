@@ -32,16 +32,66 @@ export class LoggerConfigService {
       },
       redact: {
         paths: [
+          // Authentication related
           'req.headers.authorization',
           'req.headers.cookie',
+          'req.headers["x-api-key"]',
+          'req.headers["x-token"]',
+          'res.headers["set-cookie"]',
+
+          // Common credential patterns
           'password',
+          'passwd',
+          'secret',
           'token',
+          'accessToken',
           'refreshToken',
+          'apiKey',
+          'api_key',
+          'privateKey',
+          'private_key',
+          'credentials',
+
+          // Nested credentials with wildcards
           '*.password',
+          '*.passwd',
+          '*.secret',
           '*.token',
+          '*.accessToken',
           '*.refreshToken',
+          '*.apiKey',
+          '*.api_key',
+          '*.privateKey',
+          '*.private_key',
+          '*.credentials',
+          '*.auth',
+
+          // Personal identifiable information (PII)
+          'email',
+          'phone',
+          'ssn',
+          'socialSecurity',
+          'creditCard',
+          'credit_card',
+          'cardNumber',
+          'card_number',
+          '*.email',
+          '*.phone',
+          '*.ssn',
+          '*.socialSecurity',
+          '*.creditCard',
+          '*.credit_card',
+          '*.cardNumber',
+          '*.card_number',
+
+          // Request body may contain sensitive information
+          'req.body.password',
+          'req.body.token',
+          'req.body.secret',
+          'req.body.creditCard',
         ],
-        remove: true,
+        // Use censor method instead of remove
+        censor: '[REDACTED]',
       },
     };
 
