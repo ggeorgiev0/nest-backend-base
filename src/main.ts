@@ -3,7 +3,12 @@ import { NestFactory, HttpAdapterHost } from '@nestjs/core';
 import { Logger } from 'nestjs-pino';
 
 import { AppModule } from './app.module';
-import { AllExceptionsFilter, GlobalValidationPipe } from './common/exceptions';
+import {
+  AllExceptionsFilter,
+  GlobalValidationPipe,
+  ExceptionMapperService,
+  ErrorLoggerService,
+} from './common/exceptions';
 import { CustomLoggerService } from './common/logger';
 
 /**
@@ -34,7 +39,12 @@ async function bootstrap(): Promise<void> {
   // Register global exception filter
   const httpAdapterHost = app.get(HttpAdapterHost);
   const logger = app.get(CustomLoggerService);
-  app.useGlobalFilters(new AllExceptionsFilter(httpAdapterHost, logger, configService));
+  const exceptionMapper = new ExceptionMapperService(configService);
+  const errorLogger = new ErrorLoggerService(logger, configService);
+
+  app.useGlobalFilters(
+    new AllExceptionsFilter(httpAdapterHost, configService, logger, exceptionMapper, errorLogger),
+  );
 
   // Get port from config
   const port = configService.get<number>('PORT', 3000);

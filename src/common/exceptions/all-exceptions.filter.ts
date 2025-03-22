@@ -1,121 +1,58 @@
-import {
-  ArgumentsHost,
-  Catch,
-  ExceptionFilter,
-  HttpException,
-  HttpStatus,
-  Inject,
-  Injectable,
-} from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost } from '@nestjs/core';
 import { Request, Response } from 'express';
 
 import { CorrelationIdMiddleware } from '../logger/correlation-id.middleware';
 import { CustomLoggerService } from '../logger/logger.service';
-import { sanitizeObject } from '../utils/sensitive-data.utils';
 
 import { BaseException } from './base.exception';
 import { ValidationException } from './domain-exceptions';
 import { ErrorCode } from './error-codes.enum';
 import { HttpResponse } from './http-response.interface';
+import { ErrorLoggerService } from './services/error-logger.service';
+import { ExceptionMapperService } from './services/exception-mapper.service';
+
+// AppConfig interface definition (simplified)
+interface AppConfig {
+  NODE_ENV: string;
+  [key: string]: string | number | boolean | undefined;
+}
 
 /**
- * Global exception filter that handles all exceptions
- * Formats errors according to the standardized response format
- * Integrates with the custom logger for error logging
+ * Global filter to catch and handle all exceptions
  */
 @Catch()
-@Injectable()
 export class AllExceptionsFilter implements ExceptionFilter {
   private readonly isProduction: boolean;
 
   constructor(
     private readonly httpAdapterHost: HttpAdapterHost,
+    private readonly configService: ConfigService<AppConfig>,
     private readonly logger: CustomLoggerService,
-    @Inject(ConfigService) private readonly configService: ConfigService,
+    private readonly exceptionMapper: ExceptionMapperService,
+    private readonly errorLogger: ErrorLoggerService,
   ) {
     this.isProduction = configService.get<string>('NODE_ENV') === 'production';
   }
 
-  /**
-   * Catch and handle all exceptions
-   * @param exception The exception object
-   * @param host ArgumentsHost object
-   */
   catch(exception: unknown, host: ArgumentsHost): void {
-    // Get HTTP adapter
-    const { httpAdapter } = this.httpAdapterHost;
-
-    // Get request and response objects
     const ctx = host.switchToHttp();
     const request = ctx.getRequest<Request>();
     const response = ctx.getResponse<Response>();
-
-    // Default response
-    const errorResponse: HttpResponse = {
-      status: 'error',
-      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-      message: 'Internal server error',
-      timestamp: new Date().toISOString(),
-      errorCode: ErrorCode.INTERNAL_SERVER_ERROR,
-    };
+    const { httpAdapter } = this.httpAdapterHost;
 
     // Get correlation ID from request if available
     const correlationId = (request as Request & { correlationId?: string }).correlationId;
-    if (correlationId) {
-      errorResponse.correlationId = correlationId;
-    }
 
-    // Handle different types of exceptions
-    try {
-      if (exception instanceof BaseException) {
-        // Our custom domain exceptions
-        this.handleBaseException(exception, errorResponse);
-      } else if (exception instanceof HttpException) {
-        // NestJS HTTP exceptions
-        this.handleHttpException(exception, errorResponse);
-      } else if (this.isKnownValidationFormat(exception)) {
-        // Handle validation errors from class-validator
-        this.handleValidationError(exception as Record<string, unknown>, errorResponse);
-      } else {
-        // Unknown/unexpected exceptions
-        this.handleUnknownException(exception, errorResponse);
-      }
+    // Create the response object
+    const responseBody = this.exceptionMapper.mapExceptionToResponse(exception, correlationId);
 
-      // Log the error with appropriate context
-      this.logException(exception, errorResponse, request);
+    // Log the error with appropriate level
+    this.errorLogger.logException(exception, responseBody, request);
 
-      // Remove stack trace in production
-      if (this.isProduction && errorResponse.data?.stack) {
-        delete errorResponse.data.stack;
-      }
-
-      // Sanitize sensitive data before sending response
-      const sanitizedResponse = sanitizeObject(errorResponse);
-
-      // Send the error response
-      httpAdapter.reply(response, sanitizedResponse, errorResponse.statusCode);
-    } catch (error) {
-      // If error handling itself fails, log it and return a simple error
-      this.logger.error('Error in exception filter', undefined, {
-        error: error instanceof Error ? error.message : String(error),
-      });
-
-      const fallbackResponse: HttpResponse = {
-        status: 'error',
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: 'Internal server error occurred while processing the original error',
-        timestamp: new Date().toISOString(),
-        errorCode: ErrorCode.INTERNAL_SERVER_ERROR,
-      };
-
-      if (correlationId) {
-        fallbackResponse.correlationId = correlationId;
-      }
-
-      httpAdapter.reply(response, fallbackResponse, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+    // Set HTTP status code and send the response
+    httpAdapter.reply(response, responseBody, responseBody.statusCode);
   }
 
   /**

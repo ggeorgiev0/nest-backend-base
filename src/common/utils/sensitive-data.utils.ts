@@ -14,6 +14,11 @@ const DEFAULT_MASK = '[REDACTED]';
 const DEFAULT_MAX_DEPTH = 10;
 
 /**
+ * Maximum depth for recursive sanitization to prevent stack overflow
+ */
+const MAX_SANITIZE_DEPTH = 10;
+
+/**
  * Options for sanitizing objects
  */
 export interface SanitizeOptions {
@@ -38,6 +43,15 @@ export interface SanitizeOptions {
    * @internal Used internally - don't set this manually
    */
   currentDepth?: number;
+
+  /**
+   * Custom masking function to use for sensitive values
+   * If provided, this will be used instead of the mask string
+   * @param value The original value to mask
+   * @param key The key of the value being masked
+   * @returns The masked value
+   */
+  maskFunction?: (value: unknown, key: string) => unknown;
 }
 
 /**
@@ -55,8 +69,52 @@ export const isSensitiveField = (
 };
 
 /**
- * Sanitize an object by masking sensitive fields
- *
+ * Creates a masked object with the same shape as the original
+ * Preserves structure while masking all values
+ */
+function createMaskedObjectWithSameShape(obj: Record<string, unknown>, mask: string): unknown {
+  if (Array.isArray(obj)) {
+    return obj.map(() => mask);
+  }
+
+  const result: Record<string, unknown> = {};
+  for (const key of Object.keys(obj)) {
+    const value = obj[key];
+    result[key] =
+      value && typeof value === 'object'
+        ? createMaskedObjectWithSameShape(value as Record<string, unknown>, mask)
+        : mask;
+  }
+
+  return result;
+}
+
+/**
+ * Process a sensitive field by applying appropriate masking
+ */
+function processSensitiveField(
+  value: unknown,
+  mask: string,
+  maskFunction?: (value: unknown, key: string) => unknown,
+  key?: string,
+): unknown {
+  if (maskFunction) {
+    return maskFunction(value, key || '');
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(() => mask);
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    return createMaskedObjectWithSameShape(value as Record<string, unknown>, mask);
+  }
+
+  return mask;
+}
+
+/**
+ * Recursively sanitize an object, masking sensitive fields
  * @param obj Object to sanitize
  * @param options Sanitization options
  * @returns Sanitized object with sensitive fields masked
@@ -67,32 +125,121 @@ export function sanitizeObject<T>(obj: T, options: SanitizeOptions = {}): T {
     mask = DEFAULT_MASK,
     maxDepth = DEFAULT_MAX_DEPTH,
     currentDepth = 0,
+    maskFunction,
   } = options;
 
-  // Handle non-objects and depth limit
-  if (!obj || typeof obj !== 'object' || currentDepth >= maxDepth) {
+  // Prevent stack overflow with a max depth check
+  if (currentDepth > maxDepth) {
+    return obj;
+  }
+
+  // Handle non-objects
+  if (!obj || typeof obj !== 'object') {
     return obj;
   }
 
   // Combine default and custom sensitive fields
   const sensitiveFields = [...SENSITIVE_FIELDS, ...customSensitiveFields];
 
-  // Handle arrays
+  // Handle arrays with recursive sanitization
   if (Array.isArray(obj)) {
-    const result = obj.map((item) =>
-      typeof item === 'object' && item !== null
-        ? sanitizeObject(item, {
-            customSensitiveFields,
-            mask,
-            maxDepth,
-            currentDepth: currentDepth + 1,
-          })
-        : item,
-    ) as T;
-    return result;
+    return obj.map((item) =>
+      sanitizeObject(item, {
+        customSensitiveFields,
+        mask,
+        maxDepth,
+        currentDepth: currentDepth + 1,
+        maskFunction,
+      }),
+    ) as unknown as T;
   }
 
-  // Handle objects
+  return sanitizeObjectRecord(obj as Record<string, unknown>, sensitiveFields, {
+    customSensitiveFields,
+    mask,
+    maxDepth,
+    currentDepth,
+    maskFunction,
+  }) as T;
+}
+
+/**
+ * Helper function to sanitize record objects
+ * Extracted to reduce cognitive complexity
+ */
+function sanitizeObjectRecord(
+  obj: Record<string, unknown>,
+  sensitiveFields: string[],
+  options: SanitizeOptions,
+): Record<string, unknown> {
+  const {
+    customSensitiveFields = [],
+    mask = DEFAULT_MASK,
+    maxDepth = MAX_SANITIZE_DEPTH,
+    currentDepth = 0,
+    maskFunction,
+  } = options;
+
+  const result = { ...obj };
+
+  for (const key of Object.keys(result)) {
+    // Check if this key contains any sensitive field name
+    const isSensitive = isSensitiveField(key, sensitiveFields);
+    const value = result[key];
+
+    if (isSensitive) {
+      result[key] = processSensitiveField(value, mask, maskFunction, key);
+    } else if (value && typeof value === 'object') {
+      // Recursively sanitize non-sensitive fields
+      result[key] = sanitizeObject(value, {
+        customSensitiveFields,
+        mask,
+        maxDepth,
+        currentDepth: currentDepth + 1,
+        maskFunction,
+      });
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Sanitize only the top level properties of an object
+ * Use this for better performance when deep sanitization is not needed
+ * or when working with large objects
+ *
+ * @param obj Object to sanitize
+ * @param options Sanitization options
+ * @returns Sanitized object with sensitive fields masked
+ */
+export function sanitizeObjectShallow<T>(obj: T, options: SanitizeOptions = {}): T {
+  const { customSensitiveFields = [], mask = DEFAULT_MASK, maskFunction } = options;
+
+  // Handle non-objects
+  if (!obj || typeof obj !== 'object') {
+    return obj;
+  }
+
+  // Combine default and custom sensitive fields
+  const sensitiveFields = [...SENSITIVE_FIELDS, ...customSensitiveFields];
+
+  // Handle arrays - only sanitize strings
+  if (Array.isArray(obj)) {
+    return obj.map((item) => {
+      const isSensitiveString =
+        typeof item === 'string' &&
+        sensitiveFields.some((field) => item.toLowerCase().includes(field.toLowerCase()));
+
+      if (isSensitiveString) {
+        return maskFunction ? maskFunction(item, 'array-item') : mask;
+      }
+
+      return item;
+    }) as unknown as T;
+  }
+
+  // Handle objects - only sanitize top level
   const result = { ...obj } as Record<string, unknown>;
 
   for (const key of Object.keys(result)) {
@@ -100,31 +247,20 @@ export function sanitizeObject<T>(obj: T, options: SanitizeOptions = {}): T {
     const isSensitive = isSensitiveField(key, sensitiveFields);
 
     if (isSensitive) {
-      // Mask sensitive field while preserving type
       const value = result[key];
-      if (Array.isArray(value)) {
+      if (maskFunction) {
+        // Use custom masking function if provided
+        result[key] = maskFunction(value, key);
+      } else if (Array.isArray(value)) {
         // Replace each array element with mask to preserve array structure
         result[key] = value.map(() => mask);
       } else if (typeof value === 'object' && value !== null) {
-        // For objects, apply a recursive sanitization with increased depth
-        result[key] = sanitizeObject(value, {
-          customSensitiveFields,
-          mask,
-          maxDepth,
-          currentDepth: currentDepth + 1,
-        });
+        // For objects at this level, apply a shallow mask
+        result[key] = mask;
       } else {
         // For primitive values, simply mask
         result[key] = mask;
       }
-    } else if (typeof result[key] === 'object' && result[key] !== null) {
-      // Recursively sanitize nested objects
-      result[key] = sanitizeObject(result[key] as Record<string, unknown>, {
-        customSensitiveFields,
-        mask,
-        maxDepth,
-        currentDepth: currentDepth + 1,
-      });
     }
   }
 

@@ -48,37 +48,50 @@ export class GlobalValidationPipe implements PipeTransform {
    * @throws ValidationException if validation fails
    */
   async transform(value: unknown, metadata: ArgumentMetadata): Promise<unknown> {
-    // Only validate if metatype is defined and it's not a primitive type
-    if (!metadata.metatype || this.isNativeType(metadata.metatype)) {
-      return value;
+    try {
+      // Only validate if metatype is defined and it's not a primitive type
+      if (!metadata.metatype || this.isNativeType(metadata.metatype)) {
+        return value;
+      }
+
+      // Skip validation for non-object values (e.g., params, query with a single value)
+      if (typeof value !== 'object' || value === null) {
+        return value;
+      }
+
+      const valueAsRecord = value as Record<string, unknown>;
+
+      // Transform plain object to instance of the metatype class
+      const object = plainToInstance(metadata.metatype, valueAsRecord, {
+        enableImplicitConversion: this.options.transform,
+      });
+
+      // Validate the object
+      const errors = await validate(object as object, {
+        whitelist: this.options.whitelist,
+        forbidNonWhitelisted: this.options.forbidNonWhitelisted,
+        forbidUnknownValues: this.options.forbidUnknownValues,
+      });
+
+      // If there are validation errors, format them and throw an exception
+      if (errors.length > 0) {
+        throw new ValidationException(this.formatErrors(errors));
+      }
+
+      // Return the validated object
+      return object;
+    } catch (error) {
+      // If the error is already a ValidationException, just rethrow it
+      if (error instanceof ValidationException) {
+        throw error;
+      }
+
+      // Otherwise, wrap the error in a ValidationException with a friendly message
+      throw new ValidationException(
+        { _error: ['An unexpected error occurred during validation'] },
+        `Validation error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
     }
-
-    // Skip validation for non-object values (e.g., params, query with a single value)
-    if (typeof value !== 'object' || value === null) {
-      return value;
-    }
-
-    const valueAsRecord = value as Record<string, unknown>;
-
-    // Transform plain object to instance of the metatype class
-    const object = plainToInstance(metadata.metatype, valueAsRecord, {
-      enableImplicitConversion: this.options.transform,
-    });
-
-    // Validate the object
-    const errors = await validate(object as object, {
-      whitelist: this.options.whitelist,
-      forbidNonWhitelisted: this.options.forbidNonWhitelisted,
-      forbidUnknownValues: this.options.forbidUnknownValues,
-    });
-
-    // If there are validation errors, format them and throw an exception
-    if (errors.length > 0) {
-      throw new ValidationException(this.formatErrors(errors));
-    }
-
-    // Return the validated object
-    return object;
   }
 
   /**

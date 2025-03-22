@@ -13,3 +13,6 @@ export * from './http-response.interface';
 
 // Export validation pipe
 export * from './validation.pipe';
+
+// Export services
+export * from './services';
