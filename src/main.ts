@@ -38,8 +38,12 @@ async function bootstrap(): Promise<void> {
 
   // Register global exception filter
   const httpAdapterHost = app.get(HttpAdapterHost);
-  const logger = app.get(CustomLoggerService);
+
+  // Use resolve() instead of get() for scoped providers
+  const logger = await app.resolve(CustomLoggerService);
   const exceptionMapper = new ExceptionMapperService(configService);
+
+  // Create error logger with the resolved logger instance
   const errorLogger = new ErrorLoggerService(logger, configService);
 
   app.useGlobalFilters(
