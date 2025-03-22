@@ -1,28 +1,13 @@
 /**
  * Utilities for logging safely with sensitive data handling
  */
+import { SENSITIVE_FIELDS } from '../constants/sensitive-fields.constants';
 
 /**
  * List of common field names that might contain sensitive information
  * This is used for the sanitizeObject utility function
  */
-const SENSITIVE_FIELDS = [
-  'password',
-  'token',
-  'accessToken',
-  'refreshToken',
-  'apiKey',
-  'api_key',
-  'secret',
-  'privateKey',
-  'private_key',
-  'authorization',
-  'email',
-  'phone',
-  'ssn',
-  'creditCard',
-  'cardNumber',
-];
+// Using the shared constant for sensitive fields
 
 /**
  * Sanitize an object by removing known sensitive fields

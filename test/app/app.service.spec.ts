@@ -1,14 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PinoLogger } from 'nestjs-pino';
 
-import {
-  mockPinoLogger,
-  mockCustomLoggerService,
-  resetLoggerMocks,
-} from '../test/utils/logger-mocks';
-
-import { AppService } from './app.service';
-import { CustomLoggerService } from './common/logger/logger.service';
+import { AppService } from '../../src/app.service';
+import { CustomLoggerService } from '../../src/common/logger/logger.service';
+import { mockPinoLogger, mockCustomLoggerService, resetLoggerMocks } from '../utils/logger-mocks';
 
 describe('AppService', () => {
   let service: AppService;
