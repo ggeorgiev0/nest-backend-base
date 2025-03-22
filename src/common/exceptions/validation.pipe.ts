@@ -32,7 +32,12 @@ export class GlobalValidationPipe implements PipeTransform {
        * Whether to reject nested objects that don't have decorators
        */
       forbidUnknownValues?: boolean;
-    } = {},
+    } = {
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: false,
+      forbidUnknownValues: false,
+    },
   ) {}
 
   /**
@@ -42,7 +47,7 @@ export class GlobalValidationPipe implements PipeTransform {
    * @returns The validated and transformed value
    * @throws ValidationException if validation fails
    */
-  async transform(value: any, metadata: ArgumentMetadata): Promise<any> {
+  async transform(value: unknown, metadata: ArgumentMetadata): Promise<unknown> {
     // Only validate if metatype is defined and it's not a primitive type
     if (!metadata.metatype || this.isNativeType(metadata.metatype)) {
       return value;
@@ -53,13 +58,15 @@ export class GlobalValidationPipe implements PipeTransform {
       return value;
     }
 
+    const valueAsRecord = value as Record<string, unknown>;
+
     // Transform plain object to instance of the metatype class
-    const object = plainToInstance(metadata.metatype, value, {
+    const object = plainToInstance(metadata.metatype, valueAsRecord, {
       enableImplicitConversion: this.options.transform,
     });
 
     // Validate the object
-    const errors = await validate(object, {
+    const errors = await validate(object as object, {
       whitelist: this.options.whitelist,
       forbidNonWhitelisted: this.options.forbidNonWhitelisted,
       forbidUnknownValues: this.options.forbidUnknownValues,
@@ -79,9 +86,9 @@ export class GlobalValidationPipe implements PipeTransform {
    * @param metatype The type to check
    * @returns Boolean indicating if the type is native
    */
-  private isNativeType(metatype: Type<any>): boolean {
-    const nativeTypes = [String, Boolean, Number, Array, Object, Date];
-    return nativeTypes.includes(metatype as any);
+  private isNativeType(metatype: Type<unknown>): boolean {
+    const nativeTypes: Array<Type<unknown>> = [String, Boolean, Number, Array, Object, Date];
+    return nativeTypes.includes(metatype);
   }
 
   /**

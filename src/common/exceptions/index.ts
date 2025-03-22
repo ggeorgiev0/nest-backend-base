@@ -11,8 +11,5 @@ export * from './error-codes.enum';
 // Export response interface
 export * from './http-response.interface';
 
-// Export utility functions
-export * from './sensitive-data.util';
-
 // Export validation pipe
 export * from './validation.pipe';

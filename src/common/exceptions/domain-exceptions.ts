@@ -8,7 +8,7 @@ import { ErrorCode } from './error-codes.enum';
  * Used when a requested resource doesn't exist
  */
 export class ResourceNotFoundException extends BaseException {
-  constructor(message: string = 'Resource not found', errorContext?: Record<string, any>) {
+  constructor(message = 'Resource not found', errorContext?: Record<string, unknown>) {
     super(message, HttpStatus.NOT_FOUND, ErrorCode.RESOURCE_NOT_FOUND, errorContext);
   }
 }
@@ -25,8 +25,8 @@ export class ValidationException extends BaseException {
 
   constructor(
     errors: Record<string, string[]>,
-    message: string = 'Validation failed',
-    errorContext?: Record<string, any>,
+    message = 'Validation failed',
+    errorContext?: Record<string, unknown>,
   ) {
     super(message, HttpStatus.BAD_REQUEST, ErrorCode.VALIDATION_FAILED, errorContext);
     this.errors = errors;
@@ -35,7 +35,7 @@ export class ValidationException extends BaseException {
   /**
    * Override getResponse to include validation errors
    */
-  getResponse(): Record<string, any> {
+  getResponse(): Record<string, unknown> {
     return {
       ...super.getResponse(),
       errors: this.errors,
@@ -48,7 +48,7 @@ export class ValidationException extends BaseException {
  * Used when an operation violates a business rule
  */
 export class BusinessRuleViolationException extends BaseException {
-  constructor(message: string, errorContext?: Record<string, any>) {
+  constructor(message: string, errorContext?: Record<string, unknown>) {
     super(
       message,
       HttpStatus.UNPROCESSABLE_ENTITY,
@@ -62,8 +62,8 @@ export class BusinessRuleViolationException extends BaseException {
  * Unauthorized exception
  * Used for authentication errors
  */
-export class UnauthorizedException extends BaseException {
-  constructor(message: string = 'Unauthorized access', errorContext?: Record<string, any>) {
+export class DomainUnauthorizedException extends BaseException {
+  constructor(message = 'Unauthorized access', errorContext?: Record<string, unknown>) {
     super(message, HttpStatus.UNAUTHORIZED, ErrorCode.UNAUTHORIZED, errorContext);
   }
 }
@@ -72,8 +72,8 @@ export class UnauthorizedException extends BaseException {
  * Forbidden exception
  * Used for authorization errors
  */
-export class ForbiddenException extends BaseException {
-  constructor(message: string = 'Access forbidden', errorContext?: Record<string, any>) {
+export class DomainForbiddenException extends BaseException {
+  constructor(message = 'Access forbidden', errorContext?: Record<string, unknown>) {
     super(message, HttpStatus.FORBIDDEN, ErrorCode.FORBIDDEN, errorContext);
   }
 }
@@ -83,7 +83,7 @@ export class ForbiddenException extends BaseException {
  * Used when a resource already exists or there's a conflict with the current state
  */
 export class ConflictException extends BaseException {
-  constructor(message: string = 'Resource conflict', errorContext?: Record<string, any>) {
+  constructor(message = 'Resource conflict', errorContext?: Record<string, unknown>) {
     super(message, HttpStatus.CONFLICT, ErrorCode.RESOURCE_CONFLICT, errorContext);
   }
 }
@@ -93,7 +93,7 @@ export class ConflictException extends BaseException {
  * Used when an external service fails or is unavailable
  */
 export class ExternalServiceException extends BaseException {
-  constructor(message: string = 'External service error', errorContext?: Record<string, any>) {
+  constructor(message = 'External service error', errorContext?: Record<string, unknown>) {
     super(message, HttpStatus.SERVICE_UNAVAILABLE, ErrorCode.EXTERNAL_SERVICE_ERROR, errorContext);
   }
 }

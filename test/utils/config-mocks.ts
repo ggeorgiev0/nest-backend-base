@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
+
 import { ConfigModule } from '@nestjs/config';
 
 // Mock configuration values for testing

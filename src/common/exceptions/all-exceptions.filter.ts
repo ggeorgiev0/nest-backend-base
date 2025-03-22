@@ -13,12 +13,12 @@ import { Request, Response } from 'express';
 
 import { CorrelationIdMiddleware } from '../logger/correlation-id.middleware';
 import { CustomLoggerService } from '../logger/logger.service';
+import { sanitizeObject } from '../utils/sensitive-data.utils';
 
 import { BaseException } from './base.exception';
 import { ValidationException } from './domain-exceptions';
 import { ErrorCode } from './error-codes.enum';
 import { HttpResponse } from './http-response.interface';
-import { sanitizeObject } from './sensitive-data.util';
 
 /**
  * Global exception filter that handles all exceptions
@@ -75,9 +75,9 @@ export class AllExceptionsFilter implements ExceptionFilter {
       } else if (exception instanceof HttpException) {
         // NestJS HTTP exceptions
         this.handleHttpException(exception, errorResponse);
-      } else if (this.isValidationError(exception)) {
+      } else if (this.isKnownValidationFormat(exception)) {
         // Handle validation errors from class-validator
-        this.handleValidationError(exception as Record<string, any>, errorResponse);
+        this.handleValidationError(exception as Record<string, unknown>, errorResponse);
       } else {
         // Unknown/unexpected exceptions
         this.handleUnknownException(exception, errorResponse);
@@ -141,24 +141,21 @@ export class AllExceptionsFilter implements ExceptionFilter {
    * Handle NestJS HTTP exceptions
    */
   private handleHttpException(exception: HttpException, errorResponse: HttpResponse): void {
+    // Set common properties once
     errorResponse.statusCode = exception.getStatus();
+    errorResponse.errorCode = this.mapStatusToErrorCode(exception.getStatus());
 
     const response = exception.getResponse();
 
     if (typeof response === 'string') {
       errorResponse.message = response;
-      // Map status codes to error codes even when response is a string
-      errorResponse.errorCode = this.mapStatusToErrorCode(exception.getStatus());
     } else if (typeof response === 'object') {
-      const responseObj = response as Record<string, any>;
-      errorResponse.message = responseObj.message || 'An error occurred';
-
-      // Map status codes to error codes
-      errorResponse.errorCode = this.mapStatusToErrorCode(exception.getStatus());
+      const responseObj = response as Record<string, unknown>;
+      errorResponse.message = (responseObj.message as string) || 'An error occurred';
 
       // Include validation errors if available
       if (responseObj.errors) {
-        errorResponse.errors = responseObj.errors;
+        errorResponse.errors = responseObj.errors as Record<string, string[]>;
       }
 
       // Add additional data for non-production environments
@@ -167,15 +164,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
       }
     } else {
       errorResponse.message = exception.message;
-      // Map status codes to error codes for any other response type
-      errorResponse.errorCode = this.mapStatusToErrorCode(exception.getStatus());
     }
   }
 
   /**
    * Handle validation errors
    */
-  private handleValidationError(exception: Record<string, any>, errorResponse: HttpResponse): void {
+  private handleValidationError(
+    exception: Record<string, unknown>,
+    errorResponse: HttpResponse,
+  ): void {
     errorResponse.statusCode = HttpStatus.BAD_REQUEST;
     errorResponse.message = 'Validation failed';
     errorResponse.errorCode = ErrorCode.VALIDATION_FAILED;
@@ -183,13 +181,17 @@ export class AllExceptionsFilter implements ExceptionFilter {
     // Format validation errors into a more user-friendly structure
     const formattedErrors: Record<string, string[]> = {};
 
-    if (Array.isArray(exception.message?.validation)) {
-      for (const error of exception.message.validation) {
+    if (Array.isArray((exception.message as Record<string, unknown>)?.validation)) {
+      for (const error of (exception.message as Record<string, unknown>)?.validation as Array<{
+        property: string;
+        constraints?: Record<string, string>;
+      }>) {
         formattedErrors[error.property] = Object.values(error.constraints || {});
       }
     } else if (exception.errors) {
-      for (const key of Object.keys(exception.errors)) {
-        formattedErrors[key] = [exception.errors[key].message];
+      const errors = exception.errors as Record<string, { message: string }>;
+      for (const key of Object.keys(errors)) {
+        formattedErrors[key] = [errors[key].message];
       }
     }
 
@@ -209,22 +211,25 @@ export class AllExceptionsFilter implements ExceptionFilter {
           ? {
               name: exception.name,
               message: exception.message,
-              stack: exception.stack,
+              stack: exception.stack || '',
             }
-          : { exception };
+          : { exception: String(exception) };
     }
   }
 
   /**
    * Check if an exception is a validation error
    */
-  private isValidationError(exception: unknown): boolean {
+  private isKnownValidationFormat(exception: unknown): boolean {
     if (!exception || typeof exception !== 'object') {
       return false;
     }
 
-    const exceptionObj = exception as Record<string, any>;
-    return exceptionObj.message?.validation !== undefined || exceptionObj.errors !== undefined;
+    const exceptionObj = exception as Record<string, unknown>;
+    return (
+      (exceptionObj.message as Record<string, unknown>)?.validation !== undefined ||
+      exceptionObj.errors !== undefined
+    );
   }
 
   /**

@@ -162,8 +162,8 @@ describe('AllExceptionsFilter', () => {
 
     // Email and password should both be redacted
     const expectedErrors = {
-      email: '[REDACTED]',
-      password: '[REDACTED]',
+      email: ['[REDACTED]'],
+      password: ['[REDACTED]', '[REDACTED]'],
     };
     expect(response.errors).toEqual(expectedErrors);
   });
