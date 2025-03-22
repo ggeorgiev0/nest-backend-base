@@ -17,23 +17,28 @@ src/
 │   ├── controllers/  # Request handlers
 │   ├── dtos/        # Data Transfer Objects
 │   └── validators/   # Custom validators
+├── common/           # Shared components used across the application
+│   ├── constants/    # Application constants and enums
+│   ├── exceptions/   # Exception handling system
+│   │   ├── services/ # Exception handling services
+│   │   └── ...       # Exception filters, base exceptions, etc.
+│   ├── logger/       # Logging system with correlation ID tracking
+│   └── utils/        # Shared utilities (e.g., sensitive data handling)
 ├── config/           # Configuration files and environment variables
-│   ├── database/    # Database configuration
-│   └── env/         # Environment configuration
-├── core/            # Core business logic, services, and models
-│   ├── entities/    # Database entities
-│   ├── services/    # Business logic services
-│   └── interfaces/  # Core interfaces and types
-├── lib/             # Shared libraries and utility functions
-│   ├── decorators/  # Custom decorators
-│   ├── filters/     # Exception filters
-│   ├── guards/      # Authentication/Authorization guards
-│   ├── interceptors/# Request/Response interceptors
-│   └── middleware/  # Custom middleware
-└── utils/           # Helper utilities and shared code
-    ├── constants/   # Constants and enums
-    ├── helpers/     # Helper functions
-    └── types/       # Shared types and interfaces
+│   ├── env/          # Environment configuration and validation
+│   └── ...           # Other configuration modules
+├── core/             # Core business logic, services, and models
+│   ├── entities/     # Database entities
+│   ├── services/     # Business logic services
+│   └── interfaces/   # Core interfaces and types
+├── lib/              # Specialized libraries and utilities
+│   ├── decorators/   # Custom decorators
+│   ├── guards/       # Authentication/Authorization guards
+│   ├── interceptors/ # Request/Response interceptors
+│   └── middleware/   # Custom middleware
+└── utils/            # Helper utilities and shared code
+    ├── helpers/      # Helper functions
+    └── types/        # Shared types and interfaces
 ```
 
 ## Features
@@ -43,12 +48,18 @@ src/
 - Consistent code formatting with Prettier
 - Git hooks with Husky and lint-staged
 - Path aliases for clean imports
-- Structured folders following "Bulletproof" principles
+- Structured folders following domain-driven design principles
 - JWT-based authentication
 - Role-based access control (RBAC)
 - Request validation using class-validator
 - Swagger/OpenAPI documentation
-- Error handling and logging system
+- Advanced error handling system:
+  - Centralized exception filter
+  - Standardized error response format
+  - Structured error codes for client-side handling
+  - Sensitive data protection in logs and responses
+  - Correlation ID tracking for request tracing
+- Comprehensive logging system with structured logs
 - Database migrations and seeding
 - Unit and e2e testing setup
 - Docker support
@@ -236,6 +247,8 @@ Example:
 import { join } from 'path';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { CustomLoggerService } from '@/common/logger';
+import { sanitizeObject } from '@/common/utils';
 import { UserService } from '@/core/services';
 import { BaseController } from '../base.controller';
 import { CreateUserDto } from './dto';
@@ -251,6 +264,52 @@ The project uses strict TypeScript configuration with:
 - noImplicitAny
 - strictBindCallApply
 - noUncheckedIndexedAccess
+
+## Error Handling System
+
+The project implements a comprehensive error handling system that ensures consistent error responses across the application:
+
+### Key Components
+
+- **AllExceptionsFilter**: Global filter that catches all exceptions and formats them according to a standardized format
+- **ExceptionMapperService**: Maps different exception types to standardized response objects
+- **ErrorLoggerService**: Logs exceptions with appropriate context and log levels based on the error type
+- **Validation Pipe**: Handles validation errors with detailed feedback
+- **BaseException**: Base class for all domain exceptions with error code support
+
+### Error Response Format
+
+All API error responses follow a consistent structure:
+
+```json
+{
+  "status": "error",
+  "statusCode": 400,
+  "message": "Error message",
+  "errorCode": "E01001",
+  "timestamp": "2023-03-22T12:34:56.789Z",
+  "correlationId": "correlation-id",
+  "errors": {
+    "field": ["error message"]
+  }
+}
+```
+
+### Error Codes
+
+Error codes follow the format `E{Category}{Specific}`:
+
+- E: Error prefix
+- Category: Two-digit category code (01-99)
+- Specific: Three-digit specific error code
+
+Examples:
+
+- `E01001`: Validation failed
+- `E03001`: Forbidden access
+- `E04001`: Resource not found
+
+For more details, see the [Error Handling documentation](docs/error-handling.md).
 
 ## Contributing
 

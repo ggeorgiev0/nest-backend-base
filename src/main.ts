@@ -46,9 +46,7 @@ async function bootstrap(): Promise<void> {
   // Create error logger with the resolved logger instance
   const errorLogger = new ErrorLoggerService(logger, configService);
 
-  app.useGlobalFilters(
-    new AllExceptionsFilter(httpAdapterHost, configService, logger, exceptionMapper, errorLogger),
-  );
+  app.useGlobalFilters(new AllExceptionsFilter(httpAdapterHost, exceptionMapper, errorLogger));
 
   // Get port from config
   const port = configService.get<number>('PORT', 3000);

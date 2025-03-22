@@ -13,7 +13,6 @@ import {
   ExceptionMapperService,
   ErrorLoggerService,
 } from '../../src/common/exceptions';
-import { CustomLoggerService } from '../../src/common/logger';
 import { sanitizeObject } from '../../src/common/utils';
 
 // Create mock ArgumentsHost outside the describe block
@@ -47,7 +46,6 @@ function createMockArgumentsHost(): ArgumentsHost {
 describe('AllExceptionsFilter', () => {
   let filter: AllExceptionsFilter;
   let httpAdapter: any;
-  let logger: Partial<CustomLoggerService>;
   let configService: Partial<ConfigService>;
   let exceptionMapper: Partial<ExceptionMapperService>;
   let errorLogger: Partial<ErrorLoggerService>;
@@ -58,17 +56,9 @@ describe('AllExceptionsFilter', () => {
       reply: jest.fn(),
     };
 
-    // Mock the logger
-    logger = {
-      error: jest.fn(),
-      warn: jest.fn(),
-      log: jest.fn(),
-      debug: jest.fn(),
-    };
-
     // Mock the config service
     configService = {
-      get: jest.fn().mockImplementation((key: string) => (key === 'NODE_ENV' ? 'test' : undefined)),
+      get: jest.fn(),
     };
 
     // Mock exception mapper
@@ -126,10 +116,6 @@ describe('AllExceptionsFilter', () => {
         {
           provide: HttpAdapterHost,
           useValue: { httpAdapter },
-        },
-        {
-          provide: CustomLoggerService,
-          useValue: logger,
         },
         {
           provide: ConfigService,

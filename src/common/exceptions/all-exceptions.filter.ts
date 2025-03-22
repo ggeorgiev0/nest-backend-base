@@ -1,18 +1,9 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost } from '@nestjs/core';
 import { Request, Response } from 'express';
 
-import { CustomLoggerService } from '../logger/logger.service';
-
 import { ErrorLoggerService } from './services/error-logger.service';
 import { ExceptionMapperService } from './services/exception-mapper.service';
-
-// AppConfig interface definition (simplified)
-interface AppConfig {
-  NODE_ENV: string;
-  [key: string]: string | number | boolean | undefined;
-}
 
 /**
  * Global filter to catch and handle all exceptions
@@ -23,17 +14,11 @@ interface AppConfig {
  */
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
-  private readonly isProduction: boolean;
-
   constructor(
     private readonly httpAdapterHost: HttpAdapterHost,
-    private readonly configService: ConfigService<AppConfig>,
-    private readonly logger: CustomLoggerService,
     private readonly exceptionMapper: ExceptionMapperService,
     private readonly errorLogger: ErrorLoggerService,
-  ) {
-    this.isProduction = configService.get<string>('NODE_ENV') === 'production';
-  }
+  ) {}
 
   /**
    * Catch and handle all exceptions

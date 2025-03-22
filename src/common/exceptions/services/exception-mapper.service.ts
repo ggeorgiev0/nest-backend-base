@@ -15,7 +15,7 @@ export class ExceptionMapperService {
   private readonly isProduction: boolean;
 
   constructor(private readonly configService: ConfigService) {
-    this.isProduction = configService.get<string>('NODE_ENV') === 'production';
+    this.isProduction = this.configService.get<string>('NODE_ENV') === 'production';
   }
 
   /**

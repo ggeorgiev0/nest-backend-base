@@ -65,7 +65,7 @@ export class ErrorLoggerService {
     private readonly logger: CustomLoggerService,
     private readonly configService: ConfigService,
   ) {
-    this.isProduction = configService.get<string>('NODE_ENV') === 'production';
+    this.isProduction = this.configService.get<string>('NODE_ENV') === 'production';
   }
 
   /**
