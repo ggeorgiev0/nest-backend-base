@@ -1,0 +1,31 @@
+#!/bin/sh
+
+# Get the commit message file path and message source (from the parameters passed to the hook)
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=$2
+
+# Skip for merge commits, amended commits, or commits with a message from a file
+if [ "$COMMIT_SOURCE" = "merge" ] || [ "$COMMIT_SOURCE" = "commit" ] || [ "$COMMIT_SOURCE" = "message" ]; then
+  exit 0
+fi
+
+# Get the current branch name
+BRANCH_NAME=$(git symbolic-ref --short HEAD)
+
+# Extract issue number from branch name using regex
+# This will match patterns like feature-name-123, issue-name-123, etc.
+if [[ $BRANCH_NAME =~ -([0-9]+)$ ]]; then
+  ISSUE_NUMBER="${BASH_REMATCH[1]}"
+  
+  # Read the commit message
+  COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+  
+  # Check if commit message already contains an issue reference
+  if [[ $COMMIT_MSG =~ \[#[0-9]+\] ]]; then
+    # Issue reference already exists, do nothing
+    exit 0
+  else
+    # Append issue number to commit message
+    echo "$COMMIT_MSG [#$ISSUE_NUMBER]" > "$COMMIT_MSG_FILE"
+  fi
+fi 

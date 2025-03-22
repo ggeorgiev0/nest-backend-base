@@ -1,0 +1,42 @@
+#!/bin/sh
+
+# This hook automatically appends the issue number from branch names to commit messages.
+# It extracts the issue number from branch names following the pattern: feature-description-XX
+# Example: If your branch is named 'error-handling-4' and commit message is 'feat: add proper error handling',
+# it will become 'feat: add proper error handling [#4]'
+
+# Get the commit message file path and message source
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=$2
+
+# Skip for merge commits, amended commits, or commits with a message from a file
+# This prevents the hook from modifying commit messages in these specific scenarios
+if [ "$COMMIT_SOURCE" = "merge" ] || [ "$COMMIT_SOURCE" = "commit" ] || [ "$COMMIT_SOURCE" = "message" ]; then
+  exit 0
+fi
+
+# Get the current branch name
+BRANCH_NAME=$(git symbolic-ref --short HEAD)
+
+# Extract issue number from branch name using regex
+# This pattern matches any branch name that ends with a hyphen followed by numbers
+# Examples: feature-123, bugfix-user-auth-456, issue-as-suffix-23
+if [[ $BRANCH_NAME =~ -([0-9]+)$ ]]; then
+  ISSUE_NUMBER="${BASH_REMATCH[1]}"
+  
+  # Read the commit message
+  COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+  
+  # Check if commit message already contains an issue reference
+  # This prevents adding duplicate references if one already exists
+  if [[ $COMMIT_MSG =~ \[#[0-9]+\] ]]; then
+    # Issue reference already exists, do nothing
+    exit 0
+  else
+    # Append issue number to commit message
+    echo "$COMMIT_MSG [#$ISSUE_NUMBER]" > "$COMMIT_MSG_FILE"
+  fi
+fi
+
+# NOTE: To install this hook, copy it to .git/hooks/prepare-commit-msg or use Husky
+# Don't forget to make it executable with: chmod +x .git/hooks/prepare-commit-msg 
