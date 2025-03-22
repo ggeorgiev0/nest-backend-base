@@ -260,6 +260,22 @@ The project uses strict TypeScript configuration with:
 4. Ensure all tests pass
 5. Submit a pull request
 
+## Debugging
+
+This project includes VSCode debugging configurations to make debugging easier.
+
+Press F5 to start debugging with the default configuration. For detailed instructions, see [Debugging Guide](docs/debugging-guide.md).
+
+### Using F5 Key for Debugging
+
+Press F5 to start debugging with the default configuration. You can select from different debug configurations:
+
+1. **Debug NestJS App** - Launch the NestJS application with debugging enabled
+2. **Debug Current Test** - Debug the currently open test file
+3. **Debug All Tests** - Run and debug all tests
+
+For comprehensive instructions and tips, see the [full debugging guide](docs/debugging-guide.md).
+
 ## Scripts
 
 - `yarn start:dev` - Start the development server
