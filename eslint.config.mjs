@@ -9,7 +9,7 @@ import * as eslintPluginImport from 'eslint-plugin-import';
 
 export default tseslint.config(
   {
-    ignores: ['eslint.config.mjs', 'dist/**', 'node_modules/**'],
+    ignores: ['eslint.config.mjs', 'dist/**', 'node_modules/**', 'test/jest.setup.js'],
   },
   eslint.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
@@ -28,6 +28,7 @@ export default tseslint.config(
         project: './tsconfig.json',
         projectService: true,
         tsconfigRootDir: import.meta.dirname,
+        allowDefaultProject: true,
       },
     },
   },
@@ -87,7 +88,7 @@ export default tseslint.config(
         {
           commonjs: true,
           caseSensitive: true,
-          ignore: ['^@nestjs/.*$'],
+          ignore: ['^@nestjs/.*$', '\\./services$', '\\./services/index$'],
         },
       ],
       'import/no-duplicates': 'error',
@@ -115,6 +116,21 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/no-unsafe-return': 'off',
+    },
+  },
+  {
+    files: ['**/test/**/*.ts', '**/*.spec.ts', '**/*.test.ts'],
+    rules: {
+      'sonarjs/no-hardcoded-passwords': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
+      '@typescript-eslint/no-unsafe-return': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/unbound-method': 'off',
+      'sonarjs/no-nested-functions': 'off',
     },
   },
 );

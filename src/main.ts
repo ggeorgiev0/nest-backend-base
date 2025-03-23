@@ -1,8 +1,15 @@
 import { ConfigService } from '@nestjs/config';
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, HttpAdapterHost } from '@nestjs/core';
 import { Logger } from 'nestjs-pino';
 
 import { AppModule } from './app.module';
+import {
+  AllExceptionsFilter,
+  GlobalValidationPipe,
+  ExceptionMapperService,
+  ErrorLoggerService,
+} from './common/exceptions';
+import { CustomLoggerService } from './common/logger';
 
 /**
  * Bootstrap the application
@@ -18,13 +25,36 @@ async function bootstrap(): Promise<void> {
 
   // Get configuration service
   const configService = app.get(ConfigService);
+
+  // Register global validation pipe
+  app.useGlobalPipes(
+    new GlobalValidationPipe({
+      transform: true, // Transform payloads to match DTO classes
+      whitelist: true, // Strip properties that don't have decorators
+      forbidNonWhitelisted: true, // Throw error when non-whitelisted properties are present
+      forbidUnknownValues: true, // Validate nested objects without decorators
+    }),
+  );
+
+  // Register global exception filter
+  const httpAdapterHost = app.get(HttpAdapterHost);
+
+  // Use resolve() instead of get() for scoped providers
+  const logger = await app.resolve(CustomLoggerService);
+  const exceptionMapper = new ExceptionMapperService(configService);
+
+  // Create error logger with the resolved logger instance
+  const errorLogger = new ErrorLoggerService(logger, configService);
+
+  app.useGlobalFilters(new AllExceptionsFilter(httpAdapterHost, exceptionMapper, errorLogger));
+
+  // Get port from config
   const port = configService.get<number>('PORT', 3000);
 
   // Start the application
   await app.listen(port);
 
   // Log startup information using the configured logger
-  const logger = app.get(Logger);
   const appName = configService.get<string>('APP_NAME', 'NestJS Backend Base');
   const environment = configService.get<string>('NODE_ENV', 'development');
 

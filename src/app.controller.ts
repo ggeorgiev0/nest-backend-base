@@ -1,8 +1,9 @@
 import { Controller, Get, HttpException, HttpStatus, Param, Post, Body } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 
+import { pickSafeFields, sanitizeObject } from '@/common/utils';
+
 import { AppService } from './app.service';
-import { sanitizeObject, pickSafeFields } from './common/logger';
 
 /**
  * Example application controller demonstrating logging patterns
