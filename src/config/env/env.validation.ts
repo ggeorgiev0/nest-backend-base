@@ -73,6 +73,24 @@ export class EnvironmentVariablesValidation {
   @IsNotEmpty()
   DB_SCHEMA!: string;
 
+  // Prisma
+  @IsString()
+  @IsNotEmpty()
+  DATABASE_URL!: string;
+
+  // Supabase
+  @IsString()
+  @IsNotEmpty()
+  SUPABASE_URL!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  SUPABASE_ANON_KEY!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  SUPABASE_SERVICE_ROLE_KEY!: string;
+
   // JWT
   @IsString()
   @IsNotEmpty()
