@@ -33,6 +33,13 @@ config/
 - `DB_DATABASE`: Database name
 - `DB_SCHEMA`: Database schema
 
+### Supabase
+
+- `SUPABASE_URL`: Supabase project URL
+- `SUPABASE_ANON_KEY`: Supabase anonymous key for client-side operations
+- `SUPABASE_SERVICE_ROLE_KEY`: Supabase service role key for server-side operations
+- `DATABASE_URL`: Direct connection URL to the Supabase PostgreSQL database
+
 ### JWT
 
 - `JWT_SECRET`: Secret key for JWT tokens
@@ -50,6 +57,8 @@ config/
 
 - `LOG_LEVEL`: Logging level (debug/info/warn/error)
 - `LOG_FORMAT`: Logging format (dev/combined/json)
+- `LOG_DIR`: Directory to store log files
+- `LOG_FILE_PREFIX`: Prefix for log file names
 
 ### Security
 

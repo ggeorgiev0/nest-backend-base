@@ -26,7 +26,11 @@
       "@config/*": ["src/config/*"],
       "@core/*": ["src/core/*"],
       "@lib/*": ["src/lib/*"],
-      "@utils/*": ["src/utils/*"]
+      "@utils/*": ["src/utils/*"],
+      "@common/*": ["src/common/*"],
+      "@infrastructure/*": ["src/infrastructure/*"],
+      "@persistence/*": ["src/infrastructure/persistence/*"],
+      "@users/*": ["src/users/*"]
     }
   },
   "include": ["src/**/*", "test/**/*", "test/jest.setup.js"],

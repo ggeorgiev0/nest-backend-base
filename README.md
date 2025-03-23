@@ -1,6 +1,6 @@
 # NestJS Backend Base
 
-A robust NestJS backend following "Bulletproof" architecture principles, designed for scalability, maintainability, and developer productivity.
+A robust NestJS backend following DDD (Domain-Driven Design) architecture principles, designed for scalability, maintainability, and developer productivity.
 
 ## Prerequisites
 

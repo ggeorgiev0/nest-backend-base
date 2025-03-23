@@ -22,6 +22,12 @@ function createValidConfig(): Record<string, unknown> {
     DB_PASSWORD: 'postgres',
     DB_DATABASE: 'testdb',
     DB_SCHEMA: 'public',
+    // Prisma
+    DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/testdb?schema=public',
+    // Supabase
+    SUPABASE_URL: 'https://test.supabase.co',
+    SUPABASE_ANON_KEY: 'test-anon-key-1234567890',
+    SUPABASE_SERVICE_ROLE_KEY: 'test-service-role-key-1234567890',
     JWT_SECRET: 'test-secret',
     JWT_EXPIRES_IN: '1h',
     JWT_REFRESH_SECRET: 'refresh-secret',
@@ -161,5 +167,68 @@ describe('EnvironmentVariablesValidation', () => {
 
     expect(errors.length).toBe(0);
     expect(validatedConfig.REDIS_PASSWORD).toBeUndefined();
+  });
+
+  it('should fail validation when DATABASE_URL is missing', async () => {
+    const config = { ...createValidConfig() };
+    delete (config as any).DATABASE_URL;
+
+    const validatedConfig = plainToInstance(EnvironmentVariablesValidation, config);
+    const errors = await validate(validatedConfig);
+
+    expect(errors.length).toBeGreaterThan(0);
+    const databaseUrlError = errors.find((error) => error.property === 'DATABASE_URL');
+    expect(databaseUrlError).toBeDefined();
+  });
+
+  it('should fail validation when Supabase variables are missing', async () => {
+    // Test SUPABASE_URL missing
+    let config = { ...createValidConfig() };
+    delete (config as any).SUPABASE_URL;
+
+    let validatedConfig = plainToInstance(EnvironmentVariablesValidation, config);
+    let errors = await validate(validatedConfig);
+
+    expect(errors.length).toBeGreaterThan(0);
+    const supabaseUrlError = errors.find((error) => error.property === 'SUPABASE_URL');
+    expect(supabaseUrlError).toBeDefined();
+
+    // Test SUPABASE_ANON_KEY missing
+    config = { ...createValidConfig() };
+    delete (config as any).SUPABASE_ANON_KEY;
+
+    validatedConfig = plainToInstance(EnvironmentVariablesValidation, config);
+    errors = await validate(validatedConfig);
+
+    expect(errors.length).toBeGreaterThan(0);
+    const supabaseAnonKeyError = errors.find((error) => error.property === 'SUPABASE_ANON_KEY');
+    expect(supabaseAnonKeyError).toBeDefined();
+
+    // Test SUPABASE_SERVICE_ROLE_KEY missing
+    config = { ...createValidConfig() };
+    delete (config as any).SUPABASE_SERVICE_ROLE_KEY;
+
+    validatedConfig = plainToInstance(EnvironmentVariablesValidation, config);
+    errors = await validate(validatedConfig);
+
+    expect(errors.length).toBeGreaterThan(0);
+    const supabaseServiceRoleKeyError = errors.find(
+      (error) => error.property === 'SUPABASE_SERVICE_ROLE_KEY',
+    );
+    expect(supabaseServiceRoleKeyError).toBeDefined();
+  });
+
+  it('should validate DATABASE_URL is a string', async () => {
+    const config = {
+      ...createValidConfig(),
+      DATABASE_URL: 12_345, // Not a string
+    };
+
+    const validatedConfig = plainToInstance(EnvironmentVariablesValidation, config);
+    const errors = await validate(validatedConfig);
+
+    expect(errors.length).toBeGreaterThan(0);
+    const databaseUrlError = errors.find((error) => error.property === 'DATABASE_URL');
+    expect(databaseUrlError).toBeDefined();
   });
 });

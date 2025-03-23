@@ -1,0 +1,260 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+description: Comprehensive guide to the NestJS Backend Base project architecture, structure, and development practices
+globs: ["**/*.ts", "**/*.js"]
+alwaysApply: true
+---
+
+# NestJS Backend Base Project Guidelines
+
+## Overview
+
+This project is a robust NestJS backend following Domain-Driven Design (DDD) architecture principles, designed for scalability, maintainability, and developer productivity. It implements a clean architecture approach with distinct layers and provides built-in solutions for common challenges like authentication, logging, error handling, and more.
+
+## Architecture
+
+The application follows DDD principles with these key architectural layers:
+
+1. **Presentation Layer** (API) - Handles HTTP requests/responses
+2. **Application Layer** (Services) - Orchestrates use cases
+3. **Domain Layer** (Entities, Value Objects) - Contains business logic
+4. **Infrastructure Layer** - Manages technical concerns (DB, external services)
+
+Each domain concept is isolated in its own module, promoting high cohesion and loose coupling.
+
+## Project Structure
+
+```
+src/
+├── api/              # Presentation layer: controllers, DTOs, and routes
+│   ├── controllers/  # Request handlers
+│   ├── dtos/         # Data Transfer Objects
+│   └── validators/   # Custom validators
+├── common/           # Shared components across the application
+│   ├── constants/    # Application constants and enums
+│   ├── exceptions/   # Exception handling system
+│   │   ├── services/ # Exception handling services
+│   │   └── ...       # Exception filters, base exceptions, etc.
+│   ├── logger/       # Logging system with correlation ID tracking
+│   └── utils/        # Shared utilities (e.g., sensitive data handling)
+├── config/           # Configuration files and environment variables
+│   ├── env/          # Environment configuration and validation
+│   └── ...           # Other configuration modules
+├── core/             # Domain layer: business logic, entities, interfaces
+│   ├── entities/     # Domain entities
+│   ├── services/     # Domain services
+│   └── interfaces/   # Core interfaces and types
+├── infrastructure/   # Infrastructure layer: external integrations
+│   ├── database/     # Database connections and repositories
+│   ├── external/     # External API clients and integrations
+│   └── security/     # Security implementations
+├── lib/              # Specialized libraries and utilities
+│   ├── decorators/   # Custom decorators
+│   ├── guards/       # Authentication/Authorization guards
+│   ├── interceptors/ # Request/Response interceptors
+│   └── middleware/   # Custom middleware
+└── utils/            # Helper utilities and shared code
+    ├── helpers/      # Helper functions
+    └── types/        # Shared types and interfaces
+```
+
+### Key Directories and Their Purpose
+
+- **api/**: Contains controllers that handle HTTP requests, DTOs for data validation, and validators for custom validation rules.
+- **common/**: Houses components used across the application, including constants, exception handling, logging, and utilities.
+- **config/**: Manages application configuration, environment variables, and validation.
+- **core/**: Contains the domain layer with business logic, entities, and interfaces.
+- **infrastructure/**: Implements technical concerns like database access, external services, and security.
+- **lib/**: Provides specialized utilities like decorators, guards, interceptors, and middleware.
+- **utils/**: Contains general helper functions and shared types.
+
+## Logging System
+
+The application implements a comprehensive structured logging system using Pino and NestJS integration.
+
+### Logging Features
+
+- **Structured JSON Logging**: All logs are structured in JSON format for easy parsing in production.
+- **Environment-Based Configuration**: Logging adapts based on environment (development, production).
+- **Data Redaction**: Automatic redaction of sensitive data like credentials, PII, and authentication details.
+- **Correlation IDs**: Request tracing with correlation IDs for tracking requests across services.
+- **Context-Aware Logging**: Logs include the context (controller, service) they originated from.
+- **Log Rotation**: Automatic log rotation in production based on file size and time.
+
+### Using the Logger
+
+#### Basic Logging with PinoLogger
+
+```typescript
+import { Controller } from '@nestjs/common';
+import { PinoLogger } from 'nestjs-pino';
+
+@Controller('example')
+export class ExampleController {
+  constructor(private readonly logger: PinoLogger) {
+    this.logger.setContext('ExampleController');
+  }
+
+  someMethod(): void {
+    this.logger.info('This is an info message');
+    this.logger.debug({ customField: 'value' }, 'Debug message with context');
+    
+    try {
+      // Some operation
+    } catch (error) {
+      this.logger.error({ err: error }, 'An error occurred');
+    }
+  }
+}
+```
+
+#### Enhanced Logging with CustomLoggerService
+
+```typescript
+import { Controller } from '@nestjs/common';
+import { CustomLoggerService } from '../common/logger/logger.service';
+
+@Controller('example')
+export class ExampleController {
+  constructor(private readonly logger: CustomLoggerService) {}
+
+  someMethod(): void {
+    this.logger.log('Standard log message');
+    this.logger.debug('Debug message');
+    
+    try {
+      // Some operation
+    } catch (error) {
+      this.logger.error(error, undefined, {
+        additionalContext: 'Some additional context',
+      });
+    }
+  }
+}
+```
+
+### Logging Best Practices
+
+1. **Use Appropriate Log Levels**: Choose from trace, debug, info, warn, error, fatal based on message importance.
+2. **Add Context to Logs**: Include relevant data as a context object.
+3. **Structured Error Logging**: Pass error objects directly when logging errors.
+4. **Use Correlation IDs**: For distributed systems, include correlation IDs in logs.
+5. **Be Mindful of Sensitive Data**: Avoid logging sensitive information; use provided sanitization utilities.
+
+## Exception Handling
+
+The application implements a robust error handling system for consistent error reporting and handling.
+
+### Error Response Format
+
+All error responses follow this standardized format:
+
+```json
+{
+  "status": "error",
+  "statusCode": 400,
+  "message": "Error message",
+  "errorCode": "E01001",
+  "data": {}, // Optional, additional error details (only in non-production)
+  "timestamp": "2023-03-22T12:34:56.789Z",
+  "correlationId": "unique-correlation-id", // Optional
+  "errors": {} // Optional, validation errors
+}
+```
+
+### Error Codes System
+
+Error codes follow the format `E{Category}{Specific}`:
+- E: Error prefix
+- Category: Two-digit category code
+- Specific: Three-digit specific error code
+
+Categories:
+- 01: Validation errors
+- 02: Authentication errors
+- 03: Authorization errors
+- 04: Resource errors
+- 05: Business logic errors
+- 06: External service errors
+- 99: System/unexpected errors
+
+### Custom Exceptions
+
+The system provides several domain-specific exception classes:
+
+- `BaseException` - Base class for all custom exceptions
+- `ResourceNotFoundException` - For when a requested resource doesn't exist
+- `ValidationException` - For validation errors
+- `BusinessRuleViolationException` - For business rule violations
+- `UnauthorizedException` - For authentication errors
+- `ForbiddenException` - For authorization errors
+- `ConflictException` - For resource conflicts
+- `ExternalServiceException` - For external service errors
+
+#### Using Custom Exceptions
+
+```typescript
+import { ResourceNotFoundException } from '@common/exceptions';
+
+// In a service
+if (!user) {
+  throw new ResourceNotFoundException(`User with ID ${id} not found`);
+}
+
+// With additional context for logging (not exposed in response in production)
+throw new ResourceNotFoundException('User not found', { userId: id, requestPath: '/users' });
+```
+
+### Exception Handling Best Practices
+
+1. **Use Domain-Specific Exceptions**: Use the appropriate exception class for the error type.
+2. **Include Context for Logging**: Add relevant context information to exceptions.
+3. **Validate Input Data**: Use class-validator for DTOs.
+4. **Add Custom Error Messages**: Provide user-friendly error messages.
+5. **Don't Expose Sensitive Data**: Never include sensitive data in error responses.
+6. **Use Error Codes**: Use consistent error codes for client-side error handling.
+
+## Development Practices
+
+### Branch Naming Convention
+
+Branches should follow the naming convention:
+
+```
+feature-description-XX
+```
+
+Where:
+- `feature-description` is a short description of the feature or issue
+- `XX` is the issue number from the issue tracker
+
+Examples:
+- `error-handling-4`
+- `user-authentication-15`
+- `api-documentation-23`
+
+### Commit Message Convention
+
+Commit messages should follow the [Conventional Commits](mdc:https:/www.conventionalcommits.org) specification:
+
+```
+<type>: <description>
+```
+
+The issue number will be automatically appended to your commit message based on the branch name. For example, if you're on branch `error-handling-4` and write the commit message `feat: add proper error handling`, it will be automatically formatted as:
+
+```
+feat: add proper error handling [#4]
+```
+
+### Code Style
+
+- Follow the TypeScript configuration and ESLint rules defined in the project
+- Maintain consistency with existing code when making changes
+- Use the provided path aliases for clean imports
+- Follow the Domain-Driven Design principles for organizing code
+

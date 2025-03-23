@@ -1,7 +1,8 @@
 import { HttpStatus } from '@nestjs/common';
 
+import { ErrorCode } from '@/common/constants/error-codes.enum';
+
 import { BaseException } from './base.exception';
-import { ErrorCode } from './error-codes.enum';
 
 /**
  * Resource not found exception

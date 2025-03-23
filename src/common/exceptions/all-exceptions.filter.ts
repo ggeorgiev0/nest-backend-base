@@ -2,8 +2,8 @@ import { ArgumentsHost, Catch, ExceptionFilter } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { Request, Response } from 'express';
 
-import { ErrorLoggerService } from './services/error-logger.service';
-import { ExceptionMapperService } from './services/exception-mapper.service';
+import { ErrorLoggerService } from '@/core/services/exceptions/error-logger.service';
+import { ExceptionMapperService } from '@/core/services/exceptions/exception-mapper.service';
 
 /**
  * Global filter to catch and handle all exceptions

@@ -2,7 +2,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { LoggerModule as PinoLoggerModule } from 'nestjs-pino';
 
-import { ConfigModule } from '../../config/config.module';
+import { ConfigModule } from '@/config/config.module';
 
 import { CorrelationIdMiddleware } from './correlation-id.middleware';
 import { LoggerConfigService } from './logger.config';

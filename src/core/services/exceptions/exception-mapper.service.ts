@@ -1,10 +1,11 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { BaseException } from '../base.exception';
-import { ValidationException } from '../domain-exceptions';
-import { ErrorCode } from '../error-codes.enum';
-import { HttpResponse } from '../http-response.interface';
+import { ErrorCode } from '@/common/constants/error-codes.enum';
+import { HttpResponse } from '@/core/interfaces';
+
+import { BaseException } from '../../../common/exceptions/base.exception';
+import { ValidationException } from '../../../common/exceptions/domain-exceptions';
 
 /**
  * Service responsible for mapping different exception types to standardized HttpResponse objects

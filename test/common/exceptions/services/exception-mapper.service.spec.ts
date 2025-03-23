@@ -5,6 +5,7 @@ import { HttpException, HttpStatus } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 
+import { ErrorCode } from '../../../../src/common/constants/error-codes.enum';
 import {
   ResourceNotFoundException,
   ValidationException,
@@ -14,8 +15,7 @@ import {
   ConflictException,
   ExternalServiceException,
 } from '../../../../src/common/exceptions/domain-exceptions';
-import { ErrorCode } from '../../../../src/common/exceptions/error-codes.enum';
-import { ExceptionMapperService } from '../../../../src/common/exceptions/services/exception-mapper.service';
+import { ExceptionMapperService } from '../../../../src/core/services/exceptions/exception-mapper.service';
 
 describe('ExceptionMapperService', () => {
   let service: ExceptionMapperService;

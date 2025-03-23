@@ -5,12 +5,12 @@ import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request } from 'express';
 
-import { HttpResponse } from '../../../../src/common/exceptions/http-response.interface';
+import { CustomLoggerService } from '../../../../src/common/logger/logger.service';
+import { HttpResponse } from '../../../../src/core/interfaces/http-response.interface';
 import {
   ErrorLoggerService,
   ErrorLogContext,
-} from '../../../../src/common/exceptions/services/error-logger.service';
-import { CustomLoggerService } from '../../../../src/common/logger/logger.service';
+} from '../../../../src/core/services/exceptions/error-logger.service';
 
 // Mock request factory to create different request scenarios
 function createMockRequest(

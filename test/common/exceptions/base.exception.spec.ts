@@ -3,8 +3,8 @@
  */
 import { HttpStatus } from '@nestjs/common';
 
+import { ErrorCode } from '../../../src/common/constants/error-codes.enum';
 import { BaseException } from '../../../src/common/exceptions/base.exception';
-import { ErrorCode } from '../../../src/common/exceptions/error-codes.enum';
 
 // Create a concrete implementation of the abstract BaseException for testing
 class TestException extends BaseException {

@@ -3,6 +3,7 @@
  */
 import { HttpStatus } from '@nestjs/common';
 
+import { ErrorCode } from '../../../src/common/constants/error-codes.enum';
 import {
   BusinessRuleViolationException,
   ConflictException,
@@ -12,7 +13,6 @@ import {
   ResourceNotFoundException,
   ValidationException,
 } from '../../../src/common/exceptions/domain-exceptions';
-import { ErrorCode } from '../../../src/common/exceptions/error-codes.enum';
 
 describe('Domain Exceptions', () => {
   describe('ResourceNotFoundException', () => {

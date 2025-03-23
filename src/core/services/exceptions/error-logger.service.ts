@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Request } from 'express';
 
-import { CustomLoggerService } from '../../logger/logger.service';
-import { sanitizeObject } from '../../utils/sensitive-data.utils';
-import { HttpResponse } from '../http-response.interface';
+import { CustomLoggerService } from '@/common/logger/logger.service';
+import { sanitizeObject } from '@/common/utils/sensitive-data.utils';
+import { HttpResponse } from '@/core/interfaces/http-response.interface';
 
 /**
  * Logger interface for exceptions

@@ -48,6 +48,14 @@ export interface EnvironmentVariables {
   DB_DATABASE: string;
   DB_SCHEMA: string;
 
+  // Prisma
+  DATABASE_URL: string;
+
+  // Supabase
+  SUPABASE_URL: string;
+  SUPABASE_ANON_KEY: string;
+  SUPABASE_SERVICE_ROLE_KEY: string;
+
   // JWT
   JWT_SECRET: string;
   JWT_EXPIRES_IN: string;
