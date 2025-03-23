@@ -1,17 +1,54 @@
 {
   "moduleFileExtensions": ["js", "json", "ts"],
-  "rootDir": ".",
+  "rootDir": "..",
   "testRegex": ".*\\.spec\\.ts$",
   "transform": {
-    "^.+\\.(t|j)s$": "ts-jest"
+    "^.+\\.(t|j)s$": [
+      "ts-jest",
+      {
+        "isolatedModules": true
+      }
+    ]
   },
-  "collectCoverageFrom": ["**/*.(t|j)s"],
-  "coverageDirectory": "../coverage",
+  "collectCoverageFrom": [
+    "src/**/*.(t|j)s",
+    "!src/**/*.module.ts",
+    "!src/**/*.dto.ts",
+    "!src/**/*.entity.ts",
+    "!src/**/*.interface.ts",
+    "!src/**/index.ts",
+    "!src/**/*.mock.ts",
+    "!src/main.ts",
+    "!src/**/dtos/**",
+    "!src/**/interfaces/**",
+    "!src/**/constants/**",
+    "!src/**/*.config.ts",
+    "!src/**/types/**"
+  ],
+  "coverageDirectory": "coverage",
+  "coverageReporters": ["text", "lcov", "json", "html"],
+  "coverageThreshold": {
+    "global": {
+      "statements": 0,
+      "branches": 0,
+      "functions": 0,
+      "lines": 0
+    }
+  },
   "testEnvironment": "node",
   "moduleNameMapper": {
-    "^src/(.*)$": "<rootDir>/../src/$1",
-    "^@/(.*)$": "<rootDir>/../src/$1"
+    "^src/(.*)$": "<rootDir>/src/$1",
+    "^@/(.*)$": "<rootDir>/src/$1",
+    "^@api/(.*)$": "<rootDir>/src/api/$1",
+    "^@config/(.*)$": "<rootDir>/src/config/$1",
+    "^@core/(.*)$": "<rootDir>/src/core/$1",
+    "^@lib/(.*)$": "<rootDir>/src/lib/$1",
+    "^@utils/(.*)$": "<rootDir>/src/utils/$1"
   },
-  "setupFiles": ["<rootDir>/jest.setup.js"],
-  "testPathIgnorePatterns": ["<rootDir>/../src/", "<rootDir>/../node_modules/"]
+  "setupFiles": ["<rootDir>/test/jest.setup.js"],
+  "testPathIgnorePatterns": ["<rootDir>/src/", "<rootDir>/node_modules/"],
+  "maxWorkers": "50%",
+  "runner": "groups",
+  "verbose": true,
+  "watchPlugins": ["jest-watch-typeahead/filename", "jest-watch-typeahead/testname"]
 }

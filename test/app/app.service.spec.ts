@@ -1,3 +1,6 @@
+/**
+ * @group unit
+ */
 import { Test, TestingModule } from '@nestjs/testing';
 import { PinoLogger } from 'nestjs-pino';
 

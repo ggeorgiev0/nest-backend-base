@@ -1,3 +1,6 @@
+/**
+ * @group unit
+ */
 import { ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
 import { HttpAdapterHost } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';

@@ -1,3 +1,6 @@
+/**
+ * @group unit
+ */
 import { ArgumentMetadata } from '@nestjs/common';
 import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
 
