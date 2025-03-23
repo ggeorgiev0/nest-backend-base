@@ -247,6 +247,28 @@ describe('ExceptionMapperService', () => {
             expect(response).toBe(expectedCode);
           }
         });
+
+        it('should handle HttpException with response as array', () => {
+          const message = ['Error1', 'Error2'];
+          const exception = new HttpException(message, HttpStatus.BAD_REQUEST);
+          const response = service.mapExceptionToResponse(exception);
+
+          expect(response.status).toBe('error');
+          expect(response.statusCode).toBe(HttpStatus.BAD_REQUEST);
+          expect(response.message).toBe('An error occurred'); // Default message when array encountered
+          expect(response.errorCode).toBe(ErrorCode.INVALID_INPUT);
+        });
+
+        it('should handle HttpException with response as number', () => {
+          const message = 42 as unknown as Record<string, any>;
+          const exception = new HttpException(message, HttpStatus.BAD_REQUEST);
+          const response = service.mapExceptionToResponse(exception);
+
+          expect(response.status).toBe('error');
+          expect(response.statusCode).toBe(HttpStatus.BAD_REQUEST);
+          expect(response.message).toBe('Http Exception'); // Actual message returned by the service
+          expect(response.errorCode).toBe(ErrorCode.INVALID_INPUT);
+        });
       });
 
       // Testing mapping of validation error formats
@@ -301,6 +323,69 @@ describe('ExceptionMapperService', () => {
           expect(response.errors).toBeDefined();
           expect(response.errors?.email).toContain('Email is invalid');
           expect(response.errors?.name).toContain('Name is required');
+        });
+
+        it('should handle empty validation errors object', () => {
+          const exception = {
+            message: { validation: [] },
+            name: 'ValidationError',
+          };
+
+          const response = service.mapExceptionToResponse(exception);
+
+          expect(response.status).toBe('error');
+          expect(response.statusCode).toBe(HttpStatus.BAD_REQUEST);
+          expect(response.message).toBe('Validation failed');
+          expect(response.errorCode).toBe(ErrorCode.VALIDATION_FAILED);
+          expect(response.errors).toEqual({});
+        });
+
+        it('should handle validation errors without constraints', () => {
+          const exception = {
+            message: {
+              validation: [
+                { property: 'email' }, // No constraints property
+              ],
+            },
+            name: 'ValidationError',
+          };
+
+          const response = service.mapExceptionToResponse(exception);
+
+          expect(response.status).toBe('error');
+          expect(response.statusCode).toBe(HttpStatus.BAD_REQUEST);
+          expect(response.message).toBe('Validation failed');
+          expect(response.errorCode).toBe(ErrorCode.VALIDATION_FAILED);
+          expect(response.errors).toEqual({ email: [] });
+        });
+      });
+
+      // Add more tests for isKnownValidationFormat private method
+      describe('isKnownValidationFormat method', () => {
+        it('should recognize validation format with message.validation', () => {
+          const exception = {
+            message: {
+              validation: [{ property: 'email', constraints: { isEmail: 'Must be an email' } }],
+            },
+          };
+
+          // Call mapExceptionToResponse to test the private method indirectly
+          const response = service.mapExceptionToResponse(exception);
+
+          // If it recognizes the format, it should use ValidationFailed error code
+          expect(response.errorCode).toBe(ErrorCode.VALIDATION_FAILED);
+        });
+
+        it('should recognize validation format with errors property', () => {
+          const exception = {
+            errors: {
+              email: { message: 'Must be an email' },
+            },
+          };
+
+          const response = service.mapExceptionToResponse(exception);
+
+          expect(response.errorCode).toBe(ErrorCode.VALIDATION_FAILED);
         });
       });
 
