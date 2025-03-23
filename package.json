@@ -5,6 +5,9 @@
   "author": "Georgi Georgiev",
   "private": true,
   "license": "MIT",
+  "engines": {
+    "node": ">=22.14.0"
+  },
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
