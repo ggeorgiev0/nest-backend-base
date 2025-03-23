@@ -130,6 +130,7 @@ export default tseslint.config(
       '@typescript-eslint/no-unsafe-argument': 'off',
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/unbound-method': 'off',
+      'sonarjs/no-nested-functions': 'off',
     },
   },
 );

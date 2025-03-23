@@ -292,15 +292,3 @@ export function pickSafeFields<T, K extends keyof T>(obj: T, safeFields: K[]): P
 
   return result;
 }
-
-/**
- * Backward compatibility with the old API
- * @deprecated Use the new sanitizeObject function instead
- */
-export function sanitizeObjectLegacy<T extends Record<string, unknown>>(
-  obj: T,
-  customSensitiveFields: string[] = [],
-  mask = DEFAULT_MASK,
-): T {
-  return sanitizeObject(obj, { customSensitiveFields, mask });
-}
