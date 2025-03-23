@@ -1,7 +1,7 @@
 /**
  * Unified utilities for handling sensitive data in logs and error responses
  */
-import { SENSITIVE_FIELDS } from '../constants/sensitive-fields.constants';
+import { SENSITIVE_FIELDS } from '@/common/constants/sensitive-fields.constants';
 
 /**
  * Default mask for sensitive values

@@ -3,8 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { Params } from 'nestjs-pino';
 import { LoggerOptions } from 'pino';
 
-import { Environment } from '../../config/env/env.interface';
-import { SENSITIVE_FIELDS } from '../constants/sensitive-fields.constants';
+import { SENSITIVE_FIELDS } from '@/common/constants/sensitive-fields.constants';
+import { Environment } from '@/config/env/env.interface';
 
 /**
  * Header paths that contain sensitive information

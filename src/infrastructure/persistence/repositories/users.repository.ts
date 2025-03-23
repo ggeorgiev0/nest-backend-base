@@ -41,4 +41,16 @@ export class UsersRepository {
       where: { id },
     });
   }
+
+  /**
+   * Example of using a transaction to create a user and perform related operations
+   */
+  async createWithTransaction(data: Prisma.UserCreateInput): Promise<User> {
+    return this.prisma.executeTransaction(async (tx) => {
+      const user = await tx.user.create({ data });
+      // You could add more operations here that would be part of the same transaction
+      // For example: await tx.userProfile.create({ data: { userId: user.id, ... } });
+      return user;
+    });
+  }
 }

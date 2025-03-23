@@ -4,7 +4,7 @@
 import { ArgumentMetadata } from '@nestjs/common';
 import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
 
-import { GlobalValidationPipe, ValidationException } from '../../src/common/exceptions';
+import { GlobalValidationPipe, ValidationException } from '@/common/exceptions';
 
 // Test DTO class
 class TestUserDto {

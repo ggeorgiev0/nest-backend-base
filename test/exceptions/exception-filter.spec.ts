@@ -6,10 +6,11 @@ import { HttpAdapterHost } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request, Response } from 'express';
 
+import { ErrorCode } from '@/common/constants';
+
 import {
   AllExceptionsFilter,
   BaseException,
-  ErrorCode,
   ResourceNotFoundException,
   ValidationException,
   ExceptionMapperService,
