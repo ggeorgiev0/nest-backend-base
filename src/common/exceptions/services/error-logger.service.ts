@@ -146,7 +146,7 @@ export class ErrorLoggerService {
 
     // Only include body for certain methods and if it exists
     if (['POST', 'PUT', 'PATCH'].includes(request.method) && request.body) {
-      context.body = sanitizeObject(request.body);
+      context.body = sanitizeObject(request.body as Record<string, unknown>);
     }
 
     // Add error details if not in production
@@ -167,7 +167,7 @@ export class ErrorLoggerService {
    * @returns Sanitized headers
    */
   private getSecureHeaders(request: Request): Record<string, string> {
-    return sanitizeObject(request.headers, {
+    return sanitizeObject(request.headers as Record<string, unknown>, {
       customSensitiveFields: this.sensitiveHeaders,
     }) as Record<string, string>;
   }

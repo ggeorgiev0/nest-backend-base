@@ -143,7 +143,7 @@ export function sanitizeObject<T>(obj: T, options: SanitizeOptions = {}): T {
 
   // Handle arrays with recursive sanitization
   if (Array.isArray(obj)) {
-    return obj.map((item) =>
+    return obj.map((item: unknown) =>
       sanitizeObject(item, {
         customSensitiveFields,
         mask,
@@ -226,7 +226,7 @@ export function sanitizeObjectShallow<T>(obj: T, options: SanitizeOptions = {}):
 
   // Handle arrays - only sanitize strings
   if (Array.isArray(obj)) {
-    return obj.map((item) => {
+    return obj.map((item: unknown) => {
       const isSensitiveString =
         typeof item === 'string' &&
         sensitiveFields.some((field) => item.toLowerCase().includes(field.toLowerCase()));

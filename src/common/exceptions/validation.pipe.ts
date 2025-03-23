@@ -62,7 +62,10 @@ export class GlobalValidationPipe implements PipeTransform {
       const valueAsRecord = value as Record<string, unknown>;
 
       // Transform plain object to instance of the metatype class
-      const object = plainToInstance(metadata.metatype, valueAsRecord, {
+      const object = plainToInstance<
+        ArgumentMetadata,
+        Record<string, unknown> | Record<string, unknown>[]
+      >(metadata.metatype, valueAsRecord, {
         enableImplicitConversion: this.options.transform,
       });
 

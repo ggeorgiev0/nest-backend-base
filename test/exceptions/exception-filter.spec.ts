@@ -1,5 +1,4 @@
 import { ArgumentsHost, HttpException, HttpStatus } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { HttpAdapterHost } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Request, Response } from 'express';
@@ -46,7 +45,6 @@ function createMockArgumentsHost(): ArgumentsHost {
 describe('AllExceptionsFilter', () => {
   let filter: AllExceptionsFilter;
   let httpAdapter: any;
-  let configService: Partial<ConfigService>;
   let exceptionMapper: Partial<ExceptionMapperService>;
   let errorLogger: Partial<ErrorLoggerService>;
 
@@ -54,11 +52,6 @@ describe('AllExceptionsFilter', () => {
     // Mock the HTTP adapter
     httpAdapter = {
       reply: jest.fn(),
-    };
-
-    // Mock the config service
-    configService = {
-      get: jest.fn(),
     };
 
     // Mock exception mapper
@@ -116,10 +109,6 @@ describe('AllExceptionsFilter', () => {
         {
           provide: HttpAdapterHost,
           useValue: { httpAdapter },
-        },
-        {
-          provide: ConfigService,
-          useValue: configService,
         },
         {
           provide: ExceptionMapperService,
