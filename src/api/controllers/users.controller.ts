@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Param, Put, Delete, NotFoundException } from '@nestjs/common';
 import { User, Prisma } from '@prisma/client';
 
-import { UsersService } from './users.service';
+import { UsersService } from '@/core/services/users/users.service';
 
 @Controller('users')
 export class UsersController {

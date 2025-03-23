@@ -2,14 +2,14 @@ import { ConfigService } from '@nestjs/config';
 import { NestFactory, HttpAdapterHost } from '@nestjs/core';
 import { Logger } from 'nestjs-pino';
 
-import { AppModule } from './app.module';
+import { AppModule } from '@/app.module';
 import {
   AllExceptionsFilter,
   GlobalValidationPipe,
   ExceptionMapperService,
   ErrorLoggerService,
-} from './common/exceptions';
-import { CustomLoggerService } from './common/logger';
+} from '@/common/exceptions';
+import { CustomLoggerService } from '@/common/logger';
 
 /**
  * Bootstrap the application
