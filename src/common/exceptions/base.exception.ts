@@ -1,7 +1,7 @@
 import { HttpException, HttpStatus } from '@nestjs/common';
 
-import { ErrorCode } from './error-codes.enum';
-import { HttpResponse } from './http-response.interface';
+import { ErrorCode } from '@/common/constants/error-codes.enum';
+import { HttpResponse } from '@/core/interfaces/http-response.interface';
 
 /**
  * Base application exception that extends NestJS HttpException

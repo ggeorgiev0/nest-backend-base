@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { CustomLoggerService } from './common/logger/logger.service';
+import { CustomLoggerService } from '@/common/logger';
 
 /**
  * Example application service
