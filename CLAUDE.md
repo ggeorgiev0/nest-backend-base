@@ -2,6 +2,27 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## IMPORTANT: Serena MCP Usage
+
+**STRONGLY RECOMMENDED**: Always use Serena MCP tools when working with this codebase. Serena provides semantic code understanding and intelligent navigation that significantly improves code analysis and modification accuracy.
+
+To use Serena MCP:
+
+1. Ensure Serena MCP is configured in your Claude Code environment
+2. Start each session by calling `mcp__serena__initial_instructions`
+3. Use Serena's symbolic tools (`find_symbol`, `replace_symbol_body`, etc.) for precise code modifications
+4. Leverage Serena's memory system to maintain context across sessions
+
+Benefits of using Serena MCP:
+
+- Semantic understanding of code structure and relationships
+- Precise symbol-based editing instead of regex replacements
+- Persistent memory of project patterns and conventions
+- Intelligent code navigation and search capabilities
+- Better understanding of architectural patterns and dependencies
+
+If Serena MCP is not available, fallback to standard tools, but be aware that code modifications may be less precise and context may be lost between sessions.
+
 ## Common Commands
 
 ### Development
