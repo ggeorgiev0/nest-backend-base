@@ -35,6 +35,8 @@
     "prisma:generate:test": "dotenv -e .env.testing prisma generate",
     "prisma:migrate:dev": "prisma migrate dev",
     "prisma:studio:dev": "prisma studio",
+    "prisma:seed": "ts-node prisma/seed.ts",
+    "prisma:seed:dev": "dotenv -e .env.development -- ts-node prisma/seed.ts",
     "supabase": "supabase"
   },
   "dependencies": {
@@ -104,5 +106,8 @@
     "*.{json,md}": [
       "prettier --write"
     ]
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   }
 }
