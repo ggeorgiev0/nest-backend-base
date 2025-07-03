@@ -11,7 +11,6 @@ import {
 
 import { SupabaseService } from './supabase.service';
 import {
-  ChangeEvent,
   SubscriptionStatus,
   RealtimeSubscriptionOptions,
   RealtimeConfig,
@@ -93,7 +92,7 @@ export class RealtimeService implements OnModuleDestroy {
         table: options.table,
         filter: options.filter,
       } as any,
-      async (payload: RealtimePostgresChangesPayload<T>) => {
+      (payload: RealtimePostgresChangesPayload<T>) => {
         this.updateChannelActivity(channelName);
         this.logger.debug('Realtime event received', {
           channel: channelName,
@@ -101,15 +100,18 @@ export class RealtimeService implements OnModuleDestroy {
           table: payload.table,
         });
         
-        try {
-          await callback(payload);
-        } catch (error) {
-          this.logger.error(
-            error instanceof Error ? error : new Error('Callback execution failed'),
-            undefined,
-            { channelName, event: payload.eventType },
-          );
-        }
+        // Execute callback without awaiting to avoid promise in void return
+        void (async () => {
+          try {
+            await callback(payload);
+          } catch (error) {
+            this.logger.error(
+              error instanceof Error ? error : new Error('Callback execution failed'),
+              undefined,
+              { channelName, event: payload.eventType },
+            );
+          }
+        })();
       },
     );
 
@@ -281,7 +283,7 @@ export class RealtimeService implements OnModuleDestroy {
     }
   }
 
-  private handleSubscriptionTimeout(channelName: string, channel: RealtimeChannel): void {
+  private handleSubscriptionTimeout(channelName: string, _channel: RealtimeChannel): void {
     this.cleanupFailedChannel(channelName);
     throw new RealtimeTimeoutException(
       `Channel ${channelName} subscription timed out after ${this.connectionTimeout}ms`,
