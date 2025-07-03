@@ -22,7 +22,7 @@ export interface RLSPolicy {
  */
 @Injectable()
 export class RLSService {
-  private readonly SQL_IDENTIFIER_REGEX = /^[a-zA-Z_][a-zA-Z0-9_]*$/;
+  private readonly SQL_IDENTIFIER_REGEX = /^[a-zA-Z_]\w*$/;
   private readonly RESERVED_WORDS = new Set([
     'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'FROM', 'WHERE', 'JOIN',
     'TABLE', 'DROP', 'CREATE', 'ALTER', 'GRANT', 'REVOKE', 'EXECUTE',
@@ -151,7 +151,7 @@ ${checkClause};`.trim();
     if (allowPublicRead) {
       policies.push(
         this.generateCreatePolicySQL({
-          name: `Allow public read on ${table}`,
+          name: `allow_public_read_${table}`,
           table,
           action: 'SELECT',
           expression: 'true',
@@ -161,7 +161,7 @@ ${checkClause};`.trim();
       // Authenticated read policy
       policies.push(
         this.generateCreatePolicySQL({
-          name: `Allow authenticated read on ${table}`,
+          name: `allow_authenticated_read_${table}`,
           table,
           action: 'SELECT',
           expression: "auth.role() = 'authenticated'",
@@ -174,7 +174,7 @@ ${checkClause};`.trim();
     if (allowAuthenticatedInsert) {
       policies.push(
         this.generateCreatePolicySQL({
-          name: `Allow authenticated insert on ${table}`,
+          name: `allow_authenticated_insert_${table}`,
           table,
           action: 'INSERT',
           expression: "auth.role() = 'authenticated'",
@@ -188,7 +188,7 @@ ${checkClause};`.trim();
     if (allowOwnRecordUpdate) {
       policies.push(
         this.generateCreatePolicySQL({
-          name: `Allow users to update own records in ${table}`,
+          name: `allow_users_update_own_${table}`,
           table,
           action: 'UPDATE',
           expression: `auth.uid()::text = ${userIdColumn}`,
@@ -202,7 +202,7 @@ ${checkClause};`.trim();
     if (allowOwnRecordDelete) {
       policies.push(
         this.generateCreatePolicySQL({
-          name: `Allow users to delete own records in ${table}`,
+          name: `allow_users_delete_own_${table}`,
           table,
           action: 'DELETE',
           expression: `auth.uid()::text = ${userIdColumn}`,
@@ -214,7 +214,7 @@ ${checkClause};`.trim();
     // Service role bypass
     policies.push(
       this.generateCreatePolicySQL({
-        name: `Service role bypass for ${table}`,
+        name: `service_role_bypass_${table}`,
         table,
         action: 'ALL',
         expression: 'true',
