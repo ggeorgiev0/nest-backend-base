@@ -1,6 +1,6 @@
 # NestJS Backend Base
 
-A robust NestJS backend following DDD (Domain-Driven Design) architecture principles, designed for scalability, maintainability, and developer productivity.
+A robust NestJS backend following Domain-Driven Design (DDD) architecture principles, designed for scalability, maintainability, and developer productivity.
 
 ## Prerequisites
 
@@ -8,62 +8,206 @@ A robust NestJS backend following DDD (Domain-Driven Design) architecture princi
 - Yarn package manager
 - PostgreSQL (v14.x or higher)
 - Docker (optional, for containerization)
+- Supabase CLI (optional, for edge functions and Supabase features)
 
 ## Project Structure
 
 ```
 src/
-├── api/              # API controllers, DTOs, and routes
-│   ├── controllers/  # Request handlers
-│   ├── dtos/        # Data Transfer Objects
-│   └── validators/   # Custom validators
-├── common/           # Shared components used across the application
-│   ├── constants/    # Application constants and enums
-│   ├── exceptions/   # Exception handling system
-│   │   ├── services/ # Exception handling services
-│   │   └── ...       # Exception filters, base exceptions, etc.
-│   ├── logger/       # Logging system with correlation ID tracking
-│   └── utils/        # Shared utilities (e.g., sensitive data handling)
-├── config/           # Configuration files and environment variables
-│   ├── env/          # Environment configuration and validation
-│   └── ...           # Other configuration modules
-├── core/             # Core business logic, services, and models
-│   ├── entities/     # Database entities
-│   ├── services/     # Business logic services
-│   └── interfaces/   # Core interfaces and types
-├── lib/              # Specialized libraries and utilities
-│   ├── decorators/   # Custom decorators
-│   ├── guards/       # Authentication/Authorization guards
-│   ├── interceptors/ # Request/Response interceptors
-│   └── middleware/   # Custom middleware
-└── utils/            # Helper utilities and shared code
-    ├── helpers/      # Helper functions
-    └── types/        # Shared types and interfaces
+├── api/                    # API layer - HTTP request/response handling
+│   ├── controllers/        # Request handlers
+│   ├── dtos/              # Data Transfer Objects
+│   │   └── users/         # User-specific DTOs
+│   └── validators/        # Custom validators
+├── common/                # Cross-cutting concerns
+│   ├── constants/         # Application constants and enums
+│   ├── exceptions/        # Exception handling system
+│   ├── interceptors/      # Global interceptors (e.g., database error handling)
+│   ├── logger/           # Pino-based logging with correlation ID tracking
+│   └── utils/            # Shared utilities
+├── config/               # Configuration management
+│   ├── env/             # Environment configuration and validation
+│   └── ...              # Other configuration modules
+├── core/                # Core domain - business logic
+│   ├── entities/        # Domain entities (currently using DTOs)
+│   ├── interfaces/      # Core interfaces and types
+│   └── services/        # Business logic services
+│       ├── exceptions/  # Exception handling services
+│       └── users/       # User domain services
+├── infrastructure/      # Infrastructure layer - external services
+│   ├── health/         # Health check implementations
+│   └── persistence/    # Data persistence layer
+│       ├── prisma/     # Prisma ORM service
+│       ├── repositories/ # Repository implementations
+│       └── supabase/   # Supabase integration
+│           └── types/  # TypeScript types for Supabase
+├── lib/                # Reusable libraries and utilities
+│   ├── decorators/     # Custom decorators
+│   ├── guards/         # Authentication/Authorization guards
+│   ├── interceptors/   # Custom interceptors
+│   └── middleware/     # Custom middleware
+└── utils/              # Helper utilities
+    ├── helpers/        # Helper functions
+    └── types/          # Shared TypeScript types
 ```
 
 ## Features
 
-- Strict TypeScript configuration for type safety
-- Comprehensive ESLint setup with multiple plugins
-- Consistent code formatting with Prettier
-- Git hooks with Husky and lint-staged
-- Path aliases for clean imports
-- Structured folders following domain-driven design principles
-- JWT-based authentication
-- Role-based access control (RBAC)
-- Request validation using class-validator
-- Swagger/OpenAPI documentation
-- Advanced error handling system:
-  - Centralized exception filter
-  - Standardized error response format
-  - Structured error codes for client-side handling
-  - Sensitive data protection in logs and responses
+### Core Features
+
+- **TypeScript**: Strict configuration with path aliases for clean imports
+- **Code Quality**: ESLint, Prettier, Husky with lint-staged for pre-commit hooks
+- **Architecture**: Domain-Driven Design (DDD) with clear separation of concerns
+- **Testing**: Jest with test groups support (unit, integration, e2e)
+
+### Database & ORM
+
+- **Prisma ORM**: Type-safe database access with migrations
+- **PostgreSQL**: Primary database with full ACID compliance
+- **Repository Pattern**: Abstracted data access layer
+- **Database Interceptor**: Automatic Prisma error handling and mapping
+- **Seeding**: Database seed scripts with transaction support
+
+### Supabase Integration
+
+- **Real-time Subscriptions**: WebSocket-based real-time data updates
+- **Row Level Security (RLS)**: Helper service for generating RLS policies
+- **Service Role**: Separate admin client for elevated operations
+- **Edge Functions**: Ready for Supabase Edge Functions deployment
+
+### Error Handling & Logging
+
+- **Centralized Exception Filter**: Catches and formats all errors consistently
+- **Domain Exceptions**: Typed exceptions for different error scenarios
+- **Error Codes**: Structured error codes (E01xxx - E05xxx) for client handling
+- **Pino Logger**: High-performance JSON logging with:
   - Correlation ID tracking for request tracing
-- Comprehensive logging system with structured logs
-- Database migrations and seeding
-- Unit and e2e testing setup
-- Docker support
-- CI/CD pipeline configuration
+  - Automatic sensitive data redaction
+  - Log rotation in production (10MB files, 7-day retention)
+  - Pretty printing in development
+
+### API Features
+
+- **Request Validation**: class-validator with custom validation pipe
+- **DTOs**: Type-safe request/response objects
+- **Health Checks**: Database connectivity and system resource monitoring
+- **CORS**: Configurable cross-origin resource sharing
+- **Rate Limiting**: Built-in rate limiting support
+
+### Development Experience
+
+- **Hot Reload**: Fast development with --watch mode
+- **Debug Mode**: Built-in debugging support
+- **Environment Management**: Multiple .env files for different environments
+- **Docker Support**: Dockerfile and docker-compose ready
+- **CI/CD Ready**: GitHub Actions and other CI/CD configurations
+
+## Getting Started
+
+### Installation
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd nest-backend-base
+
+# Install dependencies
+yarn install
+
+# Copy environment variables
+cp .env.example .env
+cp .env.example .env.development
+cp .env.example .env.testing
+
+# Configure your database connection in .env files
+# Update DATABASE_URL with your PostgreSQL connection string
+```
+
+### Database Setup
+
+```bash
+# Generate Prisma client
+yarn prisma:generate
+
+# Run database migrations
+yarn prisma:migrate:dev
+
+# Seed the database (optional)
+yarn prisma:seed:dev
+
+# Open Prisma Studio to view your data
+yarn prisma:studio
+```
+
+### Running the Application
+
+```bash
+# Development mode with hot reload
+yarn start:dev
+
+# Debug mode
+yarn start:debug
+
+# Production mode
+yarn build
+yarn start:prod
+```
+
+## Available Commands
+
+### Development
+
+```bash
+yarn start              # Start the application
+yarn start:dev          # Start with hot reload
+yarn start:debug        # Start with debugging enabled
+yarn start:prod         # Start production build
+yarn build              # Build for production
+```
+
+### Testing
+
+```bash
+yarn test               # Run all tests
+yarn test:watch         # Run tests in watch mode
+yarn test:cov           # Run tests with coverage
+yarn test:debug         # Debug tests
+yarn test:unit          # Run unit tests only
+yarn test:integration   # Run integration tests only
+```
+
+### Code Quality
+
+```bash
+yarn lint               # Lint and fix code
+yarn format             # Format code with Prettier
+```
+
+### Database (Prisma)
+
+```bash
+yarn prisma:generate    # Generate Prisma client
+yarn prisma:migrate     # Run migrations (development)
+yarn prisma:studio      # Open Prisma Studio GUI
+
+# Environment-specific commands
+yarn prisma:generate:dev   # Generate client for development
+yarn prisma:generate:test  # Generate client for testing
+yarn prisma:seed           # Seed database (uses default .env)
+yarn prisma:seed:dev       # Seed database for development
+```
+
+### Git Hooks
+
+```bash
+yarn hooks:install      # Manually install git hooks
+```
+
+### Supabase
+
+```bash
+yarn supabase           # Run Supabase CLI commands
+```
 
 ## Branch and Commit Conventions
 
@@ -127,3 +271,154 @@ If your commit messages don't automatically include the issue number:
    ```bash
    git config --get core.hooksPath
    ```
+
+## Environment Configuration
+
+The project uses different `.env` files for different environments:
+
+- `.env` - Default environment variables
+- `.env.development` - Development-specific variables
+- `.env.testing` - Testing environment variables
+- `.env.production` - Production variables (not committed to git)
+
+### Required Environment Variables
+
+```bash
+# Application
+NODE_ENV=development
+PORT=3000
+
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/dbname
+PRISMA_LOG_LEVEL=warn
+
+# Supabase (optional)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# JWT (when authentication is implemented)
+JWT_SECRET=your-secret-key
+JWT_EXPIRES_IN=7d
+
+# Logging
+LOG_LEVEL=info
+LOG_PRETTY=true  # Set to false in production
+```
+
+## Error Handling
+
+### Error Code Structure
+
+The project uses a structured error code system:
+
+- `E01xxx` - Validation errors
+- `E02xxx` - Authentication/Authorization errors
+- `E03xxx` - Business logic errors
+- `E04xxx` - External service errors
+- `E05xxx` - Database errors
+
+### Error Response Format
+
+All errors follow a consistent format:
+
+```json
+{
+  "status": "error",
+  "statusCode": 400,
+  "message": "Validation failed",
+  "errorCode": "E01001",
+  "timestamp": "2023-12-08T12:34:56.789Z",
+  "correlationId": "abc-123-def-456",
+  "errors": {
+    "field": ["Error message"]
+  }
+}
+```
+
+## Testing Strategy
+
+### Test Organization
+
+Tests are organized by type using Jest groups:
+
+```bash
+# Run specific test groups
+yarn test:unit          # Unit tests (@group unit)
+yarn test:integration   # Integration tests (@group integration)
+```
+
+### Test Structure
+
+```
+test/
+├── unit/              # Unit tests for services, utilities
+├── integration/       # API endpoint tests
+├── e2e/              # End-to-end tests
+└── utils/            # Test utilities and mocks
+```
+
+## Important Implementation Notes
+
+### Repository Pattern
+
+Always use repositories for data access:
+
+```typescript
+// ✅ Good
+const user = await this.usersRepository.findById(id);
+
+// ❌ Avoid direct Prisma usage outside repositories
+const user = await this.prisma.user.findUnique({ where: { id } });
+```
+
+### Transaction Handling
+
+Use the transaction helper for multi-step operations:
+
+```typescript
+await this.usersRepository.executeTransaction(async (tx) => {
+  await tx.user.create({ data: userData });
+  await tx.profile.create({ data: profileData });
+});
+```
+
+### Logging Best Practices
+
+```typescript
+// Use structured logging with context
+this.logger.log('User created', { userId: user.id });
+
+// Never log sensitive data
+this.logger.log('Login attempt', { email }); // ✅ Good
+this.logger.log('Login attempt', { email, password }); // ❌ Bad
+```
+
+### Supabase Real-time Usage
+
+```typescript
+// Subscribe to table changes
+const subscription = await realtimeService.subscribe(
+  'user-changes',
+  { table: 'users', event: 'INSERT' },
+  async (payload) => {
+    await handleNewUser(payload.new);
+  },
+);
+
+// Clean up when done
+await subscription.unsubscribe();
+```
+
+## Contributing
+
+1. Create a feature branch following the naming convention
+2. Make your changes
+3. Ensure all tests pass: `yarn test`
+4. Ensure code quality: `yarn lint`
+5. Commit using conventional commits
+6. Create a pull request
+
+## License
+
+This project is licensed under the MIT License.
