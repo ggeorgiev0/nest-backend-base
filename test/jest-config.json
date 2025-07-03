@@ -43,7 +43,10 @@
     "^@config/(.*)$": "<rootDir>/src/config/$1",
     "^@core/(.*)$": "<rootDir>/src/core/$1",
     "^@lib/(.*)$": "<rootDir>/src/lib/$1",
-    "^@utils/(.*)$": "<rootDir>/src/utils/$1"
+    "^@utils/(.*)$": "<rootDir>/src/utils/$1",
+    "^@common/(.*)$": "<rootDir>/src/common/$1",
+    "^@infrastructure/(.*)$": "<rootDir>/src/infrastructure/$1",
+    "^@persistence/(.*)$": "<rootDir>/src/infrastructure/persistence/$1"
   },
   "setupFiles": ["<rootDir>/test/jest.setup.js"],
   "testPathIgnorePatterns": ["<rootDir>/src/", "<rootDir>/node_modules/"],

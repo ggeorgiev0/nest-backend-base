@@ -1,9 +1,15 @@
 /**
  * @group unit
  */
-import { HttpException, HttpStatus } from '@nestjs/common';
+import { HttpStatus } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { PinoLogger } from 'nestjs-pino';
+
+import {
+  ExternalServiceException,
+  ResourceNotFoundException,
+  DomainUnauthorizedException,
+} from '@/common/exceptions';
 
 import { AppController } from '../../src/app.controller';
 import { AppService } from '../../src/app.service';
@@ -54,7 +60,7 @@ describe('AppController', () => {
   });
 
   describe('triggerError', () => {
-    it('should throw HttpException with INTERNAL_SERVER_ERROR status', () => {
+    it('should throw ExternalServiceException', () => {
       // Arrange & Act
       try {
         appController.triggerError();
@@ -62,9 +68,9 @@ describe('AppController', () => {
         fail('Expected triggerError to throw an exception');
       } catch (error) {
         // Assert
-        expect(error).toBeInstanceOf(HttpException);
-        const httpError = error as HttpException;
-        expect(httpError.getStatus()).toBe(HttpStatus.INTERNAL_SERVER_ERROR);
+        expect(error).toBeInstanceOf(ExternalServiceException);
+        const httpError = error as ExternalServiceException;
+        expect(httpError.getStatus()).toBe(HttpStatus.SERVICE_UNAVAILABLE);
         expect(httpError.message).toBe('An error occurred');
 
         // Verify logger calls
@@ -109,7 +115,7 @@ describe('AppController', () => {
       expect(debugCallArgs[1]).toBe('User details retrieved successfully');
     });
 
-    it('should throw HttpException for user ID 999', () => {
+    it('should throw ResourceNotFoundException for user ID 999', () => {
       // Arrange
       const userId = '999';
 
@@ -119,8 +125,8 @@ describe('AppController', () => {
         fail('Expected getUserById to throw for ID 999');
       } catch (error) {
         // Assert exception details
-        expect(error).toBeInstanceOf(HttpException);
-        const httpError = error as HttpException;
+        expect(error).toBeInstanceOf(ResourceNotFoundException);
+        const httpError = error as ResourceNotFoundException;
         expect(httpError.getStatus()).toBe(HttpStatus.NOT_FOUND);
         expect(httpError.message).toBe('User not found');
 
@@ -163,7 +169,7 @@ describe('AppController', () => {
       expect(secondLogCall[1]).toBe('Processing login for user');
     });
 
-    it('should throw HttpException for invalid credentials', () => {
+    it('should throw DomainUnauthorizedException for invalid credentials', () => {
       // Arrange
       const credentials = { username: 'user', password: 'wrongpass' };
 
@@ -173,8 +179,8 @@ describe('AppController', () => {
         fail('Expected login to throw for invalid credentials');
       } catch (error) {
         // Assert exception details
-        expect(error).toBeInstanceOf(HttpException);
-        const httpError = error as HttpException;
+        expect(error).toBeInstanceOf(DomainUnauthorizedException);
+        const httpError = error as DomainUnauthorizedException;
         expect(httpError.getStatus()).toBe(HttpStatus.UNAUTHORIZED);
         expect(httpError.message).toBe('Invalid credentials');
 
