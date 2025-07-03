@@ -11,7 +11,7 @@ import {
   Min,
 } from 'class-validator';
 
-import { Environment } from './env.interface';
+import { Environment } from '@config/env/env.interface';
 
 /**
  * Validation class for environment variables using class-validator

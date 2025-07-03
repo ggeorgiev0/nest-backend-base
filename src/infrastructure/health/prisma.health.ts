@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { HealthIndicatorResult } from '@nestjs/terminus';
 
 import { ExternalServiceException } from '@/common/exceptions';
-
-import { PrismaService } from '../persistence/prisma/prisma.service';
+import { PrismaService } from '@persistence/prisma/prisma.service';
 
 @Injectable()
 export class PrismaHealthIndicator {

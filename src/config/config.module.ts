@@ -3,7 +3,7 @@ import { ConfigModule as NestConfigModule } from '@nestjs/config';
 import { plainToInstance } from 'class-transformer';
 import { validateSync, ValidationError } from 'class-validator';
 
-import { EnvironmentVariablesValidation } from './env/env.validation';
+import { EnvironmentVariablesValidation } from '@config/env/env.validation';
 
 /**
  * Validate environment configuration
