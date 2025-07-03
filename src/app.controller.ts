@@ -1,9 +1,13 @@
-import { Controller, Get, HttpException, HttpStatus, Param, Post, Body } from '@nestjs/common';
+import { Controller, Get, Param, Post, Body } from '@nestjs/common';
 import { PinoLogger } from 'nestjs-pino';
 
+import { AppService } from '@/app.service';
+import {
+  ExternalServiceException,
+  ResourceNotFoundException,
+  DomainUnauthorizedException,
+} from '@/common/exceptions';
 import { pickSafeFields, sanitizeObject } from '@/common/utils';
-
-import { AppService } from './app.service';
 
 /**
  * Example application controller demonstrating logging patterns
@@ -49,8 +53,8 @@ export class AppController {
         'Error occurred while processing request',
       );
 
-      // Re-throw as HTTP exception
-      throw new HttpException('An error occurred', HttpStatus.INTERNAL_SERVER_ERROR);
+      // Re-throw as domain exception
+      throw new ExternalServiceException('An error occurred');
     }
   }
 
@@ -63,7 +67,7 @@ export class AppController {
 
     if (id === '999') {
       this.logger.warn({ userId: id }, 'User not found');
-      throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+      throw new ResourceNotFoundException('User not found');
     }
 
     // Simulate fetching a user
@@ -103,6 +107,6 @@ export class AppController {
       return 'Login successful';
     }
 
-    throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+    throw new DomainUnauthorizedException('Invalid credentials');
   }
 }
