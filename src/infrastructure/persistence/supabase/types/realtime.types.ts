@@ -18,7 +18,7 @@ export interface RealtimeConfig {
   retryDelay?: number;
 }
 
-export type RealtimeCallback<T extends Record<string, any> = any> = (
+export type RealtimeCallback<T extends Record<string, unknown> = Record<string, unknown>> = (
   payload: RealtimePostgresChangesPayload<T>,
 ) => void | Promise<void>;
 

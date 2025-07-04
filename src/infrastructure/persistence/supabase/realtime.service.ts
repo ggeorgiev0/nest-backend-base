@@ -1,13 +1,13 @@
 import { Injectable, OnModuleDestroy, Optional, Inject } from '@nestjs/common';
 import { RealtimeChannel, RealtimePostgresChangesPayload } from '@supabase/supabase-js';
 
-import { CustomLoggerService } from '@common/logger';
 import {
   RealtimeConnectionException,
   RealtimeSubscriptionException,
   RealtimeChannelLimitException,
   RealtimeTimeoutException,
 } from '@common/exceptions/realtime.exceptions';
+import { CustomLoggerService } from '@common/logger';
 
 import { SupabaseService } from './supabase.service';
 import {
@@ -28,7 +28,7 @@ export class RealtimeService implements OnModuleDestroy {
   private activeChannels: Map<string, RealtimeChannel> = new Map();
   private channelMetadata: Map<string, ChannelMetadata> = new Map();
   private readonly maxChannels: number = 100;
-  private readonly connectionTimeout: number = 30000; // 30 seconds
+  private readonly connectionTimeout: number = 30_000; // 30 seconds
 
   constructor(
     private readonly supabaseService: SupabaseService,
@@ -45,7 +45,7 @@ export class RealtimeService implements OnModuleDestroy {
 
   async onModuleDestroy(): Promise<void> {
     // Clean up all active subscriptions
-    const promises = Array.from(this.activeChannels.keys()).map((channelName) =>
+    const promises = [...this.activeChannels.keys()].map((channelName) =>
       this.unsubscribe(channelName),
     );
     await Promise.all(promises);
@@ -54,7 +54,7 @@ export class RealtimeService implements OnModuleDestroy {
   /**
    * Subscribe to real-time changes on a table
    */
-  subscribe<T extends Record<string, any> = Record<string, unknown>>(
+  subscribe<T extends Record<string, unknown> = Record<string, unknown>>(
     channelName: string,
     options: RealtimeSubscriptionOptions,
     callback: RealtimeCallback<T>,
@@ -68,9 +68,7 @@ export class RealtimeService implements OnModuleDestroy {
 
     // Check if channel already exists
     if (this.activeChannels.has(channelName)) {
-      throw new RealtimeSubscriptionException(
-        `Channel ${channelName} already exists`,
-      );
+      throw new RealtimeSubscriptionException(`Channel ${channelName} already exists`);
     }
 
     const client = this.supabaseService.getClient();
@@ -91,7 +89,7 @@ export class RealtimeService implements OnModuleDestroy {
         schema: options.schema || 'public',
         table: options.table,
         filter: options.filter,
-      } as any,
+      },
       (payload: RealtimePostgresChangesPayload<T>) => {
         this.updateChannelActivity(channelName);
         this.logger.debug('Realtime event received', {
@@ -99,9 +97,9 @@ export class RealtimeService implements OnModuleDestroy {
           event: payload.eventType,
           table: payload.table,
         });
-        
+
         // Execute callback without awaiting to avoid promise in void return
-        void (async () => {
+        void (async (): Promise<void> => {
           try {
             await callback(payload);
           } catch (error) {
@@ -132,7 +130,7 @@ export class RealtimeService implements OnModuleDestroy {
   /**
    * Subscribe to changes on a specific record
    */
-  subscribeToRecord<T extends Record<string, any> = Record<string, unknown>>(
+  subscribeToRecord<T extends Record<string, unknown> = Record<string, unknown>>(
     channelName: string,
     table: string,
     recordId: string,
@@ -151,7 +149,7 @@ export class RealtimeService implements OnModuleDestroy {
   /**
    * Subscribe to INSERT events only
    */
-  subscribeToInserts<T extends Record<string, any> = Record<string, unknown>>(
+  subscribeToInserts<T extends Record<string, unknown> = Record<string, unknown>>(
     channelName: string,
     table: string,
     callback: RealtimeCallback<T>,
@@ -169,7 +167,7 @@ export class RealtimeService implements OnModuleDestroy {
   /**
    * Subscribe to UPDATE events only
    */
-  subscribeToUpdates<T extends Record<string, any> = Record<string, unknown>>(
+  subscribeToUpdates<T extends Record<string, unknown> = Record<string, unknown>>(
     channelName: string,
     table: string,
     callback: RealtimeCallback<T>,
@@ -189,7 +187,7 @@ export class RealtimeService implements OnModuleDestroy {
   /**
    * Subscribe to DELETE events only
    */
-  subscribeToDeletes<T extends Record<string, any> = Record<string, unknown>>(
+  subscribeToDeletes<T extends Record<string, unknown> = Record<string, unknown>>(
     channelName: string,
     table: string,
     callback: RealtimeCallback<T>,
@@ -216,7 +214,7 @@ export class RealtimeService implements OnModuleDestroy {
         this.activeChannels.delete(channelName);
         this.channelMetadata.delete(channelName);
         this.logger.log(`Unsubscribed from channel: ${channelName}`);
-      } catch (error) {
+      } catch {
         throw new RealtimeSubscriptionException(
           `Failed to unsubscribe from channel ${channelName}`,
         );
@@ -228,7 +226,7 @@ export class RealtimeService implements OnModuleDestroy {
    * Get all active channel names
    */
   getActiveChannels(): string[] {
-    return Array.from(this.activeChannels.keys());
+    return [...this.activeChannels.keys()];
   }
 
   /**

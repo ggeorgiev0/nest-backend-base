@@ -23,10 +23,12 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     if (process.env.NODE_ENV === 'development') {
       // TypeScript workaround for Prisma's event system
       // There's a known type issue with Prisma's $on method for 'query' events
-      // We use (this as any) to bypass TypeScript's type checking while still
-      // maintaining type safety for the event object with Prisma.QueryEvent
+      // We create a type assertion to properly type the event handler
       // See: https://github.com/prisma/prisma/issues/19463
-      (this as any).$on('query', (e: Prisma.QueryEvent) => {
+      const prismaWithEvents = this as PrismaClient & {
+        $on(event: 'query', callback: (e: Prisma.QueryEvent) => void): void;
+      };
+      prismaWithEvents.$on('query', (e: Prisma.QueryEvent) => {
         this.logger.debug(
           {
             query: e.query,
@@ -39,7 +41,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     }
   }
 
-  async onModuleInit() {
+  async onModuleInit(): Promise<void> {
     try {
       await this.$connect();
       this.logger.info('Prisma connected successfully');
@@ -53,7 +55,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     }
   }
 
-  async onModuleDestroy() {
+  async onModuleDestroy(): Promise<void> {
     try {
       await this.$disconnect();
       this.logger.info('Prisma disconnected successfully');
