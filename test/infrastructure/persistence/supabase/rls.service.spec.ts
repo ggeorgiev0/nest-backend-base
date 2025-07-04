@@ -1,13 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
+
+import { RLSValidationException } from '@common/exceptions/rls.exceptions';
 import { CustomLoggerService } from '@common/logger';
 import { RLSService, RLSPolicy } from '@infrastructure/persistence/supabase/rls.service';
 import { SupabaseService } from '@infrastructure/persistence/supabase/supabase.service';
-import { RLSValidationException } from '@common/exceptions/rls.exceptions';
 
 describe('RLSService', () => {
   let service: RLSService;
-  let supabaseService: SupabaseService;
-  let logger: CustomLoggerService;
 
   const mockSupabaseService = {
     getClient: jest.fn(),
@@ -39,8 +38,6 @@ describe('RLSService', () => {
     }).compile();
 
     service = module.get<RLSService>(RLSService);
-    supabaseService = module.get<SupabaseService>(SupabaseService);
-    logger = module.get<CustomLoggerService>(CustomLoggerService);
   });
 
   describe('generateEnableRLSSQL', () => {
@@ -50,20 +47,16 @@ describe('RLSService', () => {
     });
 
     it('should validate table name', () => {
-      expect(() => service.generateEnableRLSSQL('invalid-table!'))
-        .toThrow(RLSValidationException);
-      
-      expect(() => service.generateEnableRLSSQL(''))
-        .toThrow(RLSValidationException);
-      
-      expect(() => service.generateEnableRLSSQL('DROP'))
-        .toThrow(RLSValidationException);
+      expect(() => service.generateEnableRLSSQL('invalid-table!')).toThrow(RLSValidationException);
+
+      expect(() => service.generateEnableRLSSQL('')).toThrow(RLSValidationException);
+
+      expect(() => service.generateEnableRLSSQL('DROP')).toThrow(RLSValidationException);
     });
 
     it('should reject table names longer than 63 characters', () => {
       const longTableName = 'a'.repeat(64);
-      expect(() => service.generateEnableRLSSQL(longTableName))
-        .toThrow(RLSValidationException);
+      expect(() => service.generateEnableRLSSQL(longTableName)).toThrow(RLSValidationException);
     });
   });
 
@@ -108,8 +101,7 @@ describe('RLSService', () => {
         ...validPolicy,
         name: 'invalid policy!',
       };
-      expect(() => service.generateCreatePolicySQL(invalidPolicy))
-        .toThrow(RLSValidationException);
+      expect(() => service.generateCreatePolicySQL(invalidPolicy)).toThrow(RLSValidationException);
     });
 
     it('should validate table name', () => {
@@ -117,18 +109,17 @@ describe('RLSService', () => {
         ...validPolicy,
         table: 'invalid-table!',
       };
-      expect(() => service.generateCreatePolicySQL(invalidPolicy))
-        .toThrow(RLSValidationException);
+      expect(() => service.generateCreatePolicySQL(invalidPolicy)).toThrow(RLSValidationException);
     });
 
     it('should support all action types', () => {
       const actions: Array<RLSPolicy['action']> = ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'ALL'];
-      
-      actions.forEach(action => {
+
+      for (const action of actions) {
         const policy: RLSPolicy = { ...validPolicy, action };
         const sql = service.generateCreatePolicySQL(policy);
         expect(sql).toContain(`FOR ${action}`);
-      });
+      }
     });
   });
 
@@ -139,53 +130,53 @@ describe('RLSService', () => {
     });
 
     it('should validate policy name', () => {
-      expect(() => service.generateDropPolicySQL('invalid policy!', 'users'))
-        .toThrow(RLSValidationException);
+      expect(() => service.generateDropPolicySQL('invalid policy!', 'users')).toThrow(
+        RLSValidationException,
+      );
     });
 
     it('should validate table name', () => {
-      expect(() => service.generateDropPolicySQL('users_policy', 'invalid-table!'))
-        .toThrow(RLSValidationException);
+      expect(() => service.generateDropPolicySQL('users_policy', 'invalid-table!')).toThrow(
+        RLSValidationException,
+      );
     });
   });
 
   describe('logRLSPolicy', () => {
     it('should log policy information', () => {
       service.logRLSPolicy('CREATE', 'users_policy', 'users');
-      
-      expect(mockLogger.log).toHaveBeenCalledWith(
-        'RLS Policy CREATE: users_policy on users',
-      );
+
+      expect(mockLogger.log).toHaveBeenCalledWith('RLS Policy CREATE: users_policy on users');
     });
   });
 
   describe('generateTableRLSSetup', () => {
     it('should generate complete RLS setup with default options', () => {
       const policies = service.generateTableRLSSetup('users');
-      
+
       expect(policies).toHaveLength(5); // Enable RLS + 4 policies
       expect(policies[0]).toContain('ENABLE ROW LEVEL SECURITY');
-      expect(policies.some(p => p.includes('allow_authenticated_read_users'))).toBe(true);
-      expect(policies.some(p => p.includes('allow_users_update_own_users'))).toBe(true);
-      expect(policies.some(p => p.includes('allow_users_delete_own_users'))).toBe(true);
-      expect(policies.some(p => p.includes('service_role_bypass_users'))).toBe(true);
+      expect(policies.some((p) => p.includes('allow_authenticated_read_users'))).toBe(true);
+      expect(policies.some((p) => p.includes('allow_users_update_own_users'))).toBe(true);
+      expect(policies.some((p) => p.includes('allow_users_delete_own_users'))).toBe(true);
+      expect(policies.some((p) => p.includes('service_role_bypass_users'))).toBe(true);
     });
 
     it('should allow public read when specified', () => {
       const policies = service.generateTableRLSSetup('users', {
         allowPublicRead: true,
       });
-      
-      expect(policies.some(p => p.includes('allow_public_read_users'))).toBe(true);
-      expect(policies.some(p => p.includes('USING (true)'))).toBe(true);
+
+      expect(policies.some((p) => p.includes('allow_public_read_users'))).toBe(true);
+      expect(policies.some((p) => p.includes('USING (true)'))).toBe(true);
     });
 
     it('should add insert policy when specified', () => {
       const policies = service.generateTableRLSSetup('users', {
         allowAuthenticatedInsert: true,
       });
-      
-      expect(policies.some(p => p.includes('allow_authenticated_insert_users'))).toBe(true);
+
+      expect(policies.some((p) => p.includes('allow_authenticated_insert_users'))).toBe(true);
     });
 
     it('should use custom user ID column', () => {
@@ -193,16 +184,18 @@ describe('RLSService', () => {
         allowOwnRecordUpdate: true,
         userIdColumn: 'owner_id',
       });
-      
-      const updatePolicy = policies.find(p => p.includes('update own records'));
+
+      const updatePolicy = policies.find((p) => p.includes('allow_users_update_own_users'));
       expect(updatePolicy).toContain('auth.uid()::text = owner_id');
     });
 
     it('should validate custom user ID column', () => {
-      expect(() => service.generateTableRLSSetup('users', {
-        allowAuthenticatedInsert: true,
-        userIdColumn: 'invalid-column!',
-      })).toThrow(RLSValidationException);
+      expect(() =>
+        service.generateTableRLSSetup('users', {
+          allowAuthenticatedInsert: true,
+          userIdColumn: 'invalid-column!',
+        }),
+      ).toThrow(RLSValidationException);
     });
 
     it('should skip policies when disabled', () => {
@@ -210,25 +203,19 @@ describe('RLSService', () => {
         allowOwnRecordUpdate: false,
         allowOwnRecordDelete: false,
       });
-      
-      expect(policies.some(p => p.includes('update own records'))).toBe(false);
-      expect(policies.some(p => p.includes('delete own records'))).toBe(false);
+
+      expect(policies.some((p) => p.includes('allow_users_update_own_users'))).toBe(false);
+      expect(policies.some((p) => p.includes('allow_users_delete_own_users'))).toBe(false);
     });
   });
 
   describe('identifier validation', () => {
     it('should accept valid identifiers', () => {
-      const validIdentifiers = [
-        'users',
-        'user_profiles',
-        '_temp',
-        'table123',
-        'CamelCase',
-      ];
-      
-      validIdentifiers.forEach(identifier => {
+      const validIdentifiers = ['users', 'user_profiles', '_temp', 'table123', 'CamelCase'];
+
+      for (const identifier of validIdentifiers) {
         expect(() => service.generateEnableRLSSQL(identifier)).not.toThrow();
-      });
+      }
     });
 
     it('should reject invalid identifiers', () => {
@@ -240,22 +227,21 @@ describe('RLSService', () => {
         '', // empty
         '   ', // whitespace only
       ];
-      
-      invalidIdentifiers.forEach(identifier => {
-        expect(() => service.generateEnableRLSSQL(identifier))
-          .toThrow(RLSValidationException);
-      });
+
+      for (const identifier of invalidIdentifiers) {
+        expect(() => service.generateEnableRLSSQL(identifier)).toThrow(RLSValidationException);
+      }
     });
 
     it('should reject SQL reserved words', () => {
       const reservedWords = ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'TABLE', 'DROP'];
-      
-      reservedWords.forEach(word => {
-        expect(() => service.generateEnableRLSSQL(word))
-          .toThrow(RLSValidationException);
-        expect(() => service.generateEnableRLSSQL(word.toLowerCase()))
-          .toThrow(RLSValidationException);
-      });
+
+      for (const word of reservedWords) {
+        expect(() => service.generateEnableRLSSQL(word)).toThrow(RLSValidationException);
+        expect(() => service.generateEnableRLSSQL(word.toLowerCase())).toThrow(
+          RLSValidationException,
+        );
+      }
     });
   });
 });

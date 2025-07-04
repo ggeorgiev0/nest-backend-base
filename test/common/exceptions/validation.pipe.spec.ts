@@ -1,8 +1,11 @@
 import { ArgumentMetadata } from '@nestjs/common';
-import { IsString, IsNumber, IsEmail, ValidateNested, IsNotEmpty } from 'class-validator';
 import { Type } from 'class-transformer';
-import { GlobalValidationPipe } from '@common/exceptions/validation.pipe';
+import * as classTransformer from 'class-transformer';
+import { IsString, IsNumber, IsEmail, ValidateNested, IsNotEmpty } from 'class-validator';
+import * as classValidator from 'class-validator';
+
 import { ValidationException } from '@common/exceptions/domain-exceptions';
+import { GlobalValidationPipe } from '@common/exceptions/validation.pipe';
 
 // Test DTOs
 class TestDto {
@@ -174,7 +177,7 @@ describe('GlobalValidationPipe', () => {
         extraField: 'should be removed',
       };
 
-      const result = await pipe.transform(input, metadata) as any;
+      const result = (await pipe.transform(input, metadata)) as any;
 
       expect(result).toHaveProperty('name');
       expect(result).toHaveProperty('age');
@@ -214,14 +217,14 @@ describe('GlobalValidationPipe', () => {
     it('should handle unexpected errors during validation', async () => {
       // Mock plainToInstance to throw an error
       const mockError = new Error('Unexpected transformation error');
-      jest.spyOn(require('class-transformer'), 'plainToInstance').mockImplementationOnce(() => {
+      jest.spyOn(classTransformer, 'plainToInstance').mockImplementationOnce(() => {
         throw mockError;
       });
 
       const input = { name: 'Test', age: 25, email: 'test@example.com' };
 
       await expect(pipe.transform(input, metadata)).rejects.toThrow(ValidationException);
-      
+
       jest.restoreAllMocks();
     });
 
@@ -231,9 +234,7 @@ describe('GlobalValidationPipe', () => {
       circularRef.self = circularRef;
 
       // This should cause an error during validation
-      jest.spyOn(require('class-validator'), 'validate').mockRejectedValueOnce(
-        new Error('Test error')
-      );
+      jest.spyOn(classValidator, 'validate').mockRejectedValueOnce(new Error('Test error'));
 
       const input = { name: 'Test', age: 25, email: 'test@example.com' };
 

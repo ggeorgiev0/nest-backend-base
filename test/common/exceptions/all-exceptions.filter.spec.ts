@@ -1,17 +1,17 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { HttpAdapterHost } from '@nestjs/core';
 import { ArgumentsHost } from '@nestjs/common';
-import { Request, Response } from 'express';
+import { HttpAdapterHost } from '@nestjs/core';
+import { Test, TestingModule } from '@nestjs/testing';
+
 import { AllExceptionsFilter } from '@common/exceptions/all-exceptions.filter';
-import { ExceptionMapperService } from '@core/services/exceptions/exception-mapper.service';
+import {
+  ValidationException,
+  ResourceNotFoundException,
+} from '@common/exceptions/domain-exceptions';
 import { ErrorLoggerService } from '@core/services/exceptions/error-logger.service';
-import { ValidationException, ResourceNotFoundException } from '@common/exceptions/domain-exceptions';
+import { ExceptionMapperService } from '@core/services/exceptions/exception-mapper.service';
 
 describe('AllExceptionsFilter', () => {
   let filter: AllExceptionsFilter;
-  let httpAdapterHost: HttpAdapterHost;
-  let exceptionMapper: ExceptionMapperService;
-  let errorLogger: ErrorLoggerService;
 
   const mockHttpAdapter = {
     reply: jest.fn(),
@@ -71,9 +71,6 @@ describe('AllExceptionsFilter', () => {
     }).compile();
 
     filter = module.get<AllExceptionsFilter>(AllExceptionsFilter);
-    httpAdapterHost = module.get<HttpAdapterHost>(HttpAdapterHost);
-    exceptionMapper = module.get<ExceptionMapperService>(ExceptionMapperService);
-    errorLogger = module.get<ErrorLoggerService>(ErrorLoggerService);
   });
 
   describe('catch', () => {
@@ -105,11 +102,7 @@ describe('AllExceptionsFilter', () => {
         mockResponseBody,
         mockRequest,
       );
-      expect(mockHttpAdapter.reply).toHaveBeenCalledWith(
-        mockResponse,
-        mockResponseBody,
-        400,
-      );
+      expect(mockHttpAdapter.reply).toHaveBeenCalledWith(mockResponse, mockResponseBody, 400);
     });
 
     it('should handle standard Error objects', () => {
@@ -127,11 +120,7 @@ describe('AllExceptionsFilter', () => {
         exception,
         'test-correlation-id',
       );
-      expect(mockHttpAdapter.reply).toHaveBeenCalledWith(
-        mockResponse,
-        errorResponseBody,
-        500,
-      );
+      expect(mockHttpAdapter.reply).toHaveBeenCalledWith(mockResponse, errorResponseBody, 500);
     });
 
     it('should handle non-Error exceptions', () => {
@@ -155,7 +144,7 @@ describe('AllExceptionsFilter', () => {
         ...mockRequest,
         correlationId: undefined,
       };
-      
+
       const hostWithoutCorrelationId = {
         switchToHttp: jest.fn().mockReturnValue({
           getRequest: jest.fn().mockReturnValue(requestWithoutCorrelationId),
@@ -167,10 +156,7 @@ describe('AllExceptionsFilter', () => {
 
       filter.catch(exception, hostWithoutCorrelationId);
 
-      expect(mockExceptionMapper.mapExceptionToResponse).toHaveBeenCalledWith(
-        exception,
-        undefined,
-      );
+      expect(mockExceptionMapper.mapExceptionToResponse).toHaveBeenCalledWith(exception, undefined);
     });
 
     it('should pass all required parameters to error logger', () => {
@@ -197,11 +183,7 @@ describe('AllExceptionsFilter', () => {
 
       filter.catch(exception, mockArgumentsHost);
 
-      expect(mockHttpAdapter.reply).toHaveBeenCalledWith(
-        mockResponse,
-        notFoundResponseBody,
-        404,
-      );
+      expect(mockHttpAdapter.reply).toHaveBeenCalledWith(mockResponse, notFoundResponseBody, 404);
     });
 
     it('should handle null or undefined exceptions', () => {

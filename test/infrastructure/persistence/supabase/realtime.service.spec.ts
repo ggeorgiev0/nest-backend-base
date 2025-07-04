@@ -1,13 +1,14 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { CustomLoggerService } from '@common/logger';
-import { RealtimeService } from '@infrastructure/persistence/supabase/realtime.service';
-import { SupabaseService } from '@infrastructure/persistence/supabase/supabase.service';
+
 import {
   RealtimeConnectionException,
   RealtimeSubscriptionException,
   RealtimeChannelLimitException,
   RealtimeTimeoutException,
 } from '@common/exceptions/realtime.exceptions';
+import { CustomLoggerService } from '@common/logger';
+import { RealtimeService } from '@infrastructure/persistence/supabase/realtime.service';
+import { SupabaseService } from '@infrastructure/persistence/supabase/supabase.service';
 import {
   RealtimeCallback,
   ChangeEvent,
@@ -16,8 +17,6 @@ import {
 
 describe('RealtimeService', () => {
   let service: RealtimeService;
-  let supabaseService: SupabaseService;
-  let logger: CustomLoggerService;
 
   const mockChannel = {
     on: jest.fn().mockReturnThis(),
@@ -64,8 +63,6 @@ describe('RealtimeService', () => {
     }).compile();
 
     service = module.get<RealtimeService>(RealtimeService);
-    supabaseService = module.get<SupabaseService>(SupabaseService);
-    logger = module.get<CustomLoggerService>(CustomLoggerService);
   });
 
   afterEach(() => {
@@ -75,7 +72,7 @@ describe('RealtimeService', () => {
   describe('constructor', () => {
     it('should use default config values when no config provided', () => {
       expect(service['maxChannels']).toBe(100);
-      expect(service['connectionTimeout']).toBe(30000);
+      expect(service['connectionTimeout']).toBe(30_000);
     });
   });
 
@@ -84,7 +81,7 @@ describe('RealtimeService', () => {
     const tableName = 'users';
     const callback: RealtimeCallback = jest.fn();
 
-    it('should create subscription for all events on a table', async () => {
+    it('should create subscription for all events on a table', () => {
       const options: RealtimeSubscriptionOptions = {
         event: '*' as ChangeEvent,
         table: tableName,
@@ -108,7 +105,7 @@ describe('RealtimeService', () => {
       expect(subscription.unsubscribe).toBeInstanceOf(Function);
     });
 
-    it('should create subscription for specific event', async () => {
+    it('should create subscription for specific event', () => {
       const options: RealtimeSubscriptionOptions = {
         event: 'INSERT' as ChangeEvent,
         table: tableName,
@@ -140,11 +137,11 @@ describe('RealtimeService', () => {
         return mockChannel;
       });
 
-      const subscription = service.subscribe(channelName, options, callback);
-      
+      service.subscribe(channelName, options, callback);
+
       // Timeout should throw when timer expires
       expect(() => {
-        jest.advanceTimersByTime(30000);
+        jest.advanceTimersByTime(30_000);
       }).toThrow(RealtimeTimeoutException);
     });
 
@@ -159,8 +156,9 @@ describe('RealtimeService', () => {
         return mockChannel;
       });
 
-      expect(() => service.subscribe(channelName, options, callback))
-        .toThrow(RealtimeConnectionException);
+      expect(() => service.subscribe(channelName, options, callback)).toThrow(
+        RealtimeConnectionException,
+      );
     });
 
     it('should throw when channel already exists', () => {
@@ -178,8 +176,9 @@ describe('RealtimeService', () => {
       service.subscribe(channelName, options, callback);
 
       // Second subscription with same channel name should throw
-      expect(() => service.subscribe(channelName, options, callback))
-        .toThrow(RealtimeSubscriptionException);
+      expect(() => service.subscribe(channelName, options, callback)).toThrow(
+        RealtimeSubscriptionException,
+      );
     });
 
     it('should enforce channel limit', () => {
@@ -199,11 +198,12 @@ describe('RealtimeService', () => {
       }
 
       // 101st channel should throw
-      expect(() => service.subscribe('channel-101', options, callback))
-        .toThrow(RealtimeChannelLimitException);
+      expect(() => service.subscribe('channel-101', options, callback)).toThrow(
+        RealtimeChannelLimitException,
+      );
     });
 
-    it('should call callback when event is received', async () => {
+    it('should call callback when event is received', () => {
       const options: RealtimeSubscriptionOptions = {
         event: 'INSERT' as ChangeEvent,
         table: tableName,
@@ -261,14 +261,14 @@ describe('RealtimeService', () => {
 
       expect(errorCallback).toHaveBeenCalled();
       // Wait for async error handler
-      await new Promise(resolve => setImmediate(resolve));
-      
+      await new Promise((resolve) => setImmediate(resolve));
+
       expect(mockLogger.error).toHaveBeenCalledWith(
         expect.any(Error),
         undefined,
         expect.objectContaining({ channelName }),
       );
-      
+
       jest.useFakeTimers(); // Restore fake timers
     });
   });
@@ -286,14 +286,12 @@ describe('RealtimeService', () => {
         return mockChannel;
       });
 
-      const subscription = service.subscribe(channelName, options, jest.fn());
+      service.subscribe(channelName, options, jest.fn());
 
       await service.unsubscribe(channelName);
 
       expect(mockChannel.unsubscribe).toHaveBeenCalled();
-      expect(mockLogger.log).toHaveBeenCalledWith(
-        `Unsubscribed from channel: ${channelName}`,
-      );
+      expect(mockLogger.log).toHaveBeenCalledWith(`Unsubscribed from channel: ${channelName}`);
     });
 
     it('should handle unsubscribe errors', async () => {
@@ -308,13 +306,12 @@ describe('RealtimeService', () => {
         return mockChannel;
       });
 
-      const subscription = service.subscribe(channelName, options, jest.fn());
+      service.subscribe(channelName, options, jest.fn());
 
       const error = new Error('Unsubscribe failed');
       mockChannel.unsubscribe.mockRejectedValue(error);
 
-      await expect(service.unsubscribe(channelName))
-        .rejects.toThrow(RealtimeSubscriptionException);
+      await expect(service.unsubscribe(channelName)).rejects.toThrow(RealtimeSubscriptionException);
     });
   });
 
@@ -360,7 +357,7 @@ describe('RealtimeService', () => {
       service.subscribe('channel-2', options, jest.fn());
 
       // Mock successful unsubscribe
-      mockChannel.unsubscribe.mockResolvedValue(undefined);
+      mockChannel.unsubscribe.mockResolvedValue();
 
       await service.onModuleDestroy();
 

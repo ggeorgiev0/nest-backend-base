@@ -1,7 +1,8 @@
-import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { SupabaseService } from '@infrastructure/persistence/supabase/supabase.service';
+import { Test, TestingModule } from '@nestjs/testing';
 import { createClient } from '@supabase/supabase-js';
+
+import { SupabaseService } from '@infrastructure/persistence/supabase/supabase.service';
 
 jest.mock('@supabase/supabase-js', () => ({
   createClient: jest.fn(),
@@ -9,7 +10,6 @@ jest.mock('@supabase/supabase-js', () => ({
 
 describe('SupabaseService', () => {
   let service: SupabaseService;
-  let configService: ConfigService;
 
   const mockSupabaseClient = {
     auth: {},
@@ -43,15 +43,11 @@ describe('SupabaseService', () => {
     }).compile();
 
     service = module.get<SupabaseService>(SupabaseService);
-    configService = module.get<ConfigService>(ConfigService);
   });
 
   describe('constructor', () => {
     it('should create Supabase client with correct config', () => {
-      expect(createClient).toHaveBeenCalledWith(
-        'https://test.supabase.co',
-        'test-anon-key',
-      );
+      expect(createClient).toHaveBeenCalledWith('https://test.supabase.co', 'test-anon-key');
     });
 
     it('should call configService.get for required keys', () => {
@@ -92,27 +88,29 @@ describe('SupabaseService', () => {
     it('should handle missing SUPABASE_URL config', () => {
       const errorConfigService = {
         get: jest.fn((key: string) => {
-          if (key === 'SUPABASE_URL') return undefined;
+          if (key === 'SUPABASE_URL') return;
           return mockConfigService.get(key);
         }),
       };
 
-      expect(() => {
-        new SupabaseService(errorConfigService as any);
-      }).not.toThrow(); // TypeScript non-null assertion handles this
+      // TypeScript non-null assertion handles this at compile time
+      // Creating the service should not throw at runtime
+      const testService = new SupabaseService(errorConfigService as any);
+      expect(testService).toBeDefined();
     });
 
     it('should handle missing SUPABASE_ANON_KEY config', () => {
       const errorConfigService = {
         get: jest.fn((key: string) => {
-          if (key === 'SUPABASE_ANON_KEY') return undefined;
+          if (key === 'SUPABASE_ANON_KEY') return;
           return mockConfigService.get(key);
         }),
       };
 
-      expect(() => {
-        new SupabaseService(errorConfigService as any);
-      }).not.toThrow(); // TypeScript non-null assertion handles this
+      // TypeScript non-null assertion handles this at compile time
+      // Creating the service should not throw at runtime
+      const testService = new SupabaseService(errorConfigService as any);
+      expect(testService).toBeDefined();
     });
   });
 });

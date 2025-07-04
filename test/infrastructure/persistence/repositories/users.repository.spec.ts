@@ -1,11 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { UsersRepository } from '@infrastructure/persistence/repositories/users.repository';
-import { PrismaService } from '@infrastructure/persistence/prisma/prisma.service';
 import { Prisma, User } from '@prisma/client';
+
+import { PrismaService } from '@infrastructure/persistence/prisma/prisma.service';
+import { UsersRepository } from '@infrastructure/persistence/repositories/users.repository';
 
 describe('UsersRepository', () => {
   let repository: UsersRepository;
-  let prismaService: PrismaService;
 
   const mockUser: User = {
     id: '123e4567-e89b-12d3-a456-426614174000',
@@ -40,7 +40,6 @@ describe('UsersRepository', () => {
     }).compile();
 
     repository = module.get<UsersRepository>(UsersRepository);
-    prismaService = module.get<PrismaService>(PrismaService);
   });
 
   describe('create', () => {
@@ -129,7 +128,7 @@ describe('UsersRepository', () => {
         name: 'Updated Name',
       };
       const updatedUser = { ...mockUser, name: 'Updated Name' };
-      
+
       mockPrismaService.user.update.mockResolvedValue(updatedUser);
 
       const result = await repository.update(mockUser.id, updateInput);
@@ -144,11 +143,10 @@ describe('UsersRepository', () => {
     it('should handle update errors', async () => {
       const updateInput: Prisma.UserUpdateInput = { name: 'Updated' };
       const error = new Error('Update failed');
-      
+
       mockPrismaService.user.update.mockRejectedValue(error);
 
-      await expect(repository.update('non-existent', updateInput))
-        .rejects.toThrow(error);
+      await expect(repository.update('non-existent', updateInput)).rejects.toThrow(error);
     });
   });
 
@@ -168,8 +166,7 @@ describe('UsersRepository', () => {
       const error = new Error('Delete failed');
       mockPrismaService.user.delete.mockRejectedValue(error);
 
-      await expect(repository.remove('non-existent'))
-        .rejects.toThrow(error);
+      await expect(repository.remove('non-existent')).rejects.toThrow(error);
     });
   });
 
@@ -186,15 +183,13 @@ describe('UsersRepository', () => {
         },
       };
 
-      mockPrismaService.executeTransaction.mockImplementation(async (fn) => {
+      mockPrismaService.executeTransaction.mockImplementation((fn) => {
         return fn(mockTx);
       });
 
       const result = await repository.createWithTransaction(createInput);
 
-      expect(mockPrismaService.executeTransaction).toHaveBeenCalledWith(
-        expect.any(Function),
-      );
+      expect(mockPrismaService.executeTransaction).toHaveBeenCalledWith(expect.any(Function));
       expect(mockTx.user.create).toHaveBeenCalledWith({ data: createInput });
       expect(result).toEqual(mockUser);
     });
@@ -208,8 +203,7 @@ describe('UsersRepository', () => {
       const error = new Error('Transaction failed');
       mockPrismaService.executeTransaction.mockRejectedValue(error);
 
-      await expect(repository.createWithTransaction(createInput))
-        .rejects.toThrow(error);
+      await expect(repository.createWithTransaction(createInput)).rejects.toThrow(error);
     });
   });
 
@@ -218,8 +212,9 @@ describe('UsersRepository', () => {
       const prismaError = new Error('P2002: Unique constraint violation');
       mockPrismaService.user.create.mockRejectedValue(prismaError);
 
-      await expect(repository.create({ email: 'duplicate@example.com' }))
-        .rejects.toThrow(prismaError);
+      await expect(repository.create({ email: 'duplicate@example.com' })).rejects.toThrow(
+        prismaError,
+      );
     });
   });
 });
