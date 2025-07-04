@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
-import { CustomLoggerService } from '@common/logger';
 import { RLSValidationException } from '@common/exceptions/rls.exceptions';
+import { CustomLoggerService } from '@common/logger';
 
 import { SupabaseService } from './supabase.service';
 
@@ -24,8 +24,20 @@ export interface RLSPolicy {
 export class RLSService {
   private readonly SQL_IDENTIFIER_REGEX = /^[a-zA-Z_]\w*$/;
   private readonly RESERVED_WORDS = new Set([
-    'SELECT', 'INSERT', 'UPDATE', 'DELETE', 'FROM', 'WHERE', 'JOIN',
-    'TABLE', 'DROP', 'CREATE', 'ALTER', 'GRANT', 'REVOKE', 'EXECUTE',
+    'SELECT',
+    'INSERT',
+    'UPDATE',
+    'DELETE',
+    'FROM',
+    'WHERE',
+    'JOIN',
+    'TABLE',
+    'DROP',
+    'CREATE',
+    'ALTER',
+    'GRANT',
+    'REVOKE',
+    'EXECUTE',
   ]);
 
   constructor(
@@ -48,9 +60,7 @@ export class RLSService {
     }
 
     if (this.RESERVED_WORDS.has(identifier.toUpperCase())) {
-      throw new RLSValidationException(
-        `${type} name '${identifier}' is a reserved SQL keyword`,
-      );
+      throw new RLSValidationException(`${type} name '${identifier}' is a reserved SQL keyword`);
     }
 
     if (identifier.length > 63) {
@@ -90,7 +100,7 @@ export class RLSService {
   generateCreatePolicySQL(policy: RLSPolicy): string {
     const sanitizedTable = this.sanitizeTableName(policy.table);
     this.validateIdentifier(policy.name, 'Policy');
-    
+
     const roles = policy.roles?.join(', ') || 'PUBLIC';
     const checkClause = policy.checkExpression ? `WITH CHECK (${policy.checkExpression})` : '';
 
@@ -108,7 +118,7 @@ ${checkClause};`.trim();
   generateDropPolicySQL(policyName: string, table: string): string {
     const sanitizedTable = this.sanitizeTableName(table);
     this.validateIdentifier(policyName, 'Policy');
-    
+
     return `DROP POLICY IF EXISTS "${policyName}" ON "${sanitizedTable}";`;
   }
 
