@@ -88,7 +88,7 @@ describe('AllExceptionsFilter', () => {
     });
 
     it('should handle domain exceptions', () => {
-      const exception = new ValidationException('Invalid input', 'E01002');
+      const exception = new ValidationException({ field: ['Invalid input'] });
 
       filter.catch(exception, mockArgumentsHost);
 
@@ -160,7 +160,7 @@ describe('AllExceptionsFilter', () => {
     });
 
     it('should pass all required parameters to error logger', () => {
-      const exception = new ValidationException('Test error', 'E01001');
+      const exception = new ValidationException({ field: ['Test error'] });
 
       filter.catch(exception, mockArgumentsHost);
 
