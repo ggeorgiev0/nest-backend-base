@@ -33,6 +33,6 @@
       "@users/*": ["src/users/*"]
     }
   },
-  "include": ["src/**/*", "test/**/*", "test/jest.setup.js"],
+  "include": ["src/**/*", "test/**/*", "test/jest.setup.js", "prisma/seed.ts"],
   "exclude": ["node_modules", "dist"]
 }

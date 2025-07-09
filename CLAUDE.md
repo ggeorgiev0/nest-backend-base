@@ -95,6 +95,10 @@ yarn prisma:studio
 # Environment-specific commands
 yarn prisma:generate:dev    # Uses .env.development
 yarn prisma:generate:test   # Uses .env.testing
+
+# Seed the database
+yarn prisma:seed           # Uses default .env
+yarn prisma:seed:dev       # Uses .env.development
 ```
 
 ### Git Hooks
@@ -305,3 +309,104 @@ The `/health` endpoint monitors:
 - Extensible for additional service checks
 
 Access via: `GET /health`
+
+## Supabase Features
+
+### Row Level Security (RLS)
+
+The project includes RLS support via `RLSService`:
+
+```typescript
+// Enable RLS on a table
+await rlsService.enableRLS('users');
+
+// Create a policy
+await rlsService.createPolicy({
+  name: 'Users can view own profile',
+  table: 'users',
+  action: 'SELECT',
+  expression: 'auth.uid() = id',
+});
+```
+
+### Real-time Subscriptions
+
+Use `RealtimeService` for real-time data updates:
+
+```typescript
+import { RealtimeService } from '@infrastructure/persistence/supabase';
+
+// Basic subscription to all changes
+const subscription = await realtimeService.subscribe<User>(
+  'user-changes',
+  { table: 'users' },
+  async (payload) => {
+    switch (payload.eventType) {
+      case 'INSERT':
+        await handleNewUser(payload.new);
+        break;
+      case 'UPDATE':
+        await handleUserUpdate(payload.new, payload.old);
+        break;
+      case 'DELETE':
+        await handleUserDeletion(payload.old);
+        break;
+    }
+  }
+);
+
+// Subscribe to specific events
+const insertSub = realtimeService.subscribeToInserts<User>(
+  'new-users',
+  'users',
+  async (payload) => {
+    await sendWelcomeEmail(payload.new);
+  }
+);
+
+// Subscribe to changes for a specific record
+const userSub = realtimeService.subscribeToRecord<User>(
+  'user-123-changes',
+  'users',
+  'user-123',
+  async (payload) => {
+    await updateUserCache(payload.new);
+  }
+);
+
+// Subscribe with filters
+const adminUpdateSub = realtimeService.subscribeToUpdates<User>(
+  'admin-updates',
+  'users',
+  async (payload) => {
+    await notifyAdminChange(payload.new);
+  },
+  'role=eq.admin' // Only admin users
+);
+
+// Clean up when done
+await subscription.unsubscribe();
+
+// Check active channels
+const activeChannels = realtimeService.getActiveChannels();
+```
+
+#### Configuration
+
+Configure realtime behavior through the module:
+
+```typescript
+@Module({
+  imports: [
+    SupabaseModule.register({
+      realtimeConfig: {
+        maxChannels: 50,
+        connectionTimeout: 60000,
+        retryAttempts: 3,
+        retryDelay: 1000,
+      },
+    }),
+  ],
+})
+export class AppModule {}
+```

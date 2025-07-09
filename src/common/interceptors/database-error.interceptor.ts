@@ -18,9 +18,9 @@ export class DatabaseErrorInterceptor implements NestInterceptor {
     this.logger.setContext('DatabaseErrorInterceptor');
   }
 
-  intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+  intercept<T>(context: ExecutionContext, next: CallHandler<T>): Observable<T> {
     return next.handle().pipe(
-      catchError((error) => {
+      catchError((error: unknown) => {
         if (error instanceof Prisma.PrismaClientKnownRequestError) {
           // Handle specific Prisma error codes
           // See: https://www.prisma.io/docs/reference/api-reference/error-reference#error-codes
@@ -137,7 +137,7 @@ export class DatabaseErrorInterceptor implements NestInterceptor {
         }
 
         // For other errors, just rethrow
-        return throwError(() => error);
+        return throwError(() => error as Error);
       }),
     );
   }
