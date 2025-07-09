@@ -11,9 +11,12 @@ describe('PrismaService', () => {
     info: jest.fn(),
     error: jest.fn(),
     debug: jest.fn(),
+    warn: jest.fn(),
   };
 
   beforeEach(async () => {
+    jest.useFakeTimers();
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         PrismaService,
@@ -35,6 +38,8 @@ describe('PrismaService', () => {
 
   afterEach(() => {
     jest.clearAllMocks();
+    jest.clearAllTimers();
+    jest.useRealTimers();
   });
 
   describe('constructor', () => {
@@ -51,24 +56,44 @@ describe('PrismaService', () => {
       expect(mockLogger.info).toHaveBeenCalledWith('Prisma connected successfully');
     });
 
-    it('should throw error when connection fails', async () => {
+    it('should retry connection on failure', async () => {
+      const error = new Error('Connection failed');
+      (service.$connect as jest.Mock)
+        .mockRejectedValueOnce(error)
+        .mockRejectedValueOnce(error)
+        .mockResolvedValueOnce();
+
+      const initPromise = service.onModuleInit();
+
+      // Advance timers to trigger retries
+      await jest.advanceTimersByTimeAsync(1000);
+      await jest.advanceTimersByTimeAsync(2000);
+
+      await initPromise;
+
+      expect(service.$connect).toHaveBeenCalledTimes(3);
+      expect(mockLogger.info).toHaveBeenCalledWith('Prisma connected successfully');
+    });
+
+    it('should throw error after max retries', async () => {
       const error = new Error('Connection failed');
       (service.$connect as jest.Mock).mockRejectedValue(error);
 
-      await expect(service.onModuleInit()).rejects.toThrow(error);
-      expect(mockLogger.error).toHaveBeenCalledWith(
-        { err: error },
-        'Failed to connect to the database',
-      );
-    });
+      // We need to simulate the connection with proper promise handling
+      const initPromise = service.onModuleInit().catch((error_) => error_);
 
-    it('should handle non-Error exceptions', async () => {
-      const error = 'String error';
-      (service.$connect as jest.Mock).mockRejectedValue(error);
+      // Advance through all retry attempts with exponential backoff
+      await jest.advanceTimersByTimeAsync(1000); // First retry
+      await jest.advanceTimersByTimeAsync(2000); // Second retry
+      await jest.advanceTimersByTimeAsync(4000); // Third retry
+      await jest.advanceTimersByTimeAsync(8000); // Fourth retry
+      await jest.advanceTimersByTimeAsync(16_000); // Fifth retry
 
-      await expect(service.onModuleInit()).rejects.toEqual(error);
+      const result = await initPromise;
+      expect(result).toEqual(error);
+      expect(service.$connect).toHaveBeenCalledTimes(5);
       expect(mockLogger.error).toHaveBeenCalledWith(
-        'Failed to connect to the database with unknown error',
+        'Max connection retries reached. Unable to connect to database.',
       );
     });
   });
@@ -108,11 +133,37 @@ describe('PrismaService', () => {
   describe('executeTransaction', () => {
     it('should execute transaction successfully', async () => {
       const mockFn = jest.fn().mockResolvedValue('result');
+      (service.$transaction as jest.Mock).mockImplementation((fn, _options) => fn(service));
 
       const result = await service.executeTransaction(mockFn);
 
-      expect(service.$transaction).toHaveBeenCalledWith(mockFn);
+      expect(service.$transaction).toHaveBeenCalledWith(mockFn, {
+        maxWait: 5000,
+        timeout: 10_000,
+      });
       expect(mockFn).toHaveBeenCalledWith(service);
+      expect(result).toBe('result');
+    });
+
+    it('should retry transaction on connection error', async () => {
+      const mockFn = jest.fn().mockResolvedValue('result');
+      const connectionError = new Error('ECONNREFUSED');
+
+      (service.$transaction as jest.Mock)
+        .mockRejectedValueOnce(connectionError)
+        .mockImplementationOnce((fn) => fn(service));
+
+      // Mock the connect method for retry
+      (service.$connect as jest.Mock).mockResolvedValue();
+
+      const transactionPromise = service.executeTransaction(mockFn);
+
+      // Advance timer for retry delay
+      await jest.advanceTimersByTimeAsync(1000);
+
+      const result = await transactionPromise;
+
+      expect(service.$transaction).toHaveBeenCalledTimes(2);
       expect(result).toBe('result');
     });
   });
@@ -153,6 +204,28 @@ describe('PrismaService', () => {
         'Database health check failed with unknown error',
       );
       expect(result).toBe(false);
+    });
+  });
+
+  describe('getConnectionStatus', () => {
+    it('should return connection status', () => {
+      const status = service.getConnectionStatus();
+
+      expect(status).toEqual({
+        isConnected: false,
+        connectionAttempts: 0,
+      });
+    });
+
+    it('should return updated status after successful connection', async () => {
+      await service.onModuleInit();
+
+      const status = service.getConnectionStatus();
+
+      expect(status).toEqual({
+        isConnected: true,
+        connectionAttempts: 0,
+      });
     });
   });
 });
