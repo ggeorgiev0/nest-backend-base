@@ -82,12 +82,14 @@ export class RealtimeService implements OnModuleDestroy {
     }, this.connectionTimeout);
 
     // Set up the subscription
-    channel.on(
-      'postgres_changes' as const,
+    // Type assertion needed due to incomplete type definitions in @supabase/realtime-js
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+    (channel as any).on(
+      'postgres_changes',
       {
         event: options.event || '*',
         schema: options.schema || 'public',
-        table: options.table,
+        table: options.table || '',
         filter: options.filter,
       },
       (payload: RealtimePostgresChangesPayload<T>) => {
